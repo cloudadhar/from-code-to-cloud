@@ -1,4 +1,4 @@
-# Instructor Notes: Deploy Your First Container on AWS
+# Instructor Notes: Deploy Your First App on Amazon ECS Fargate
 
 ## Before the workshop
 - [ ] Do a full dry run on a **free** account (Parts 1–10), including opening the app in the browser and deploying v2.

@@ -1,6 +1,8 @@
-# Deploy Your First Container on AWS
+# Deploy Your First App on Amazon ECS Fargate
 
-### Hands-on with Amazon ECR & ECS Fargate
+### Hands-on Workshop with Docker & Amazon ECR
+
+**AWS Student Builder Group, Siddhant College of Engineering** · 30 October 2026 (Friday), 11:00 AM · Seminar Hall · Instagram [@aws.scoe](https://instagram.com/aws.scoe)
 
 You'll take a small web app, **package it as a container**, **store it in Amazon ECR**, and **run it on Amazon ECS with AWS Fargate**, with no servers to manage. Then you'll ship a new version, watch ECS heal itself, and scale out.
 
@@ -100,7 +102,23 @@ cd cloudadhar-first-container
 ```bash
 cat Dockerfile
 ```
-Each line is one step: start from a small Python image → create a non-root user → copy `app.py` and `index.html` → set the port → say how to start the app. That's all a container image is.
+Every instruction has a numbered comment explaining it:
+
+| # | Instruction | What it does |
+|---|---|---|
+| 1 | `FROM` | Start from a small official Python image |
+| 2 | `LABEL` | Add information about the image |
+| 3 | `WORKDIR` | Set the folder inside the container (`/app`) |
+| 4 | `RUN` | Run a command while **building** (create a non-root user) |
+| 5 | `COPY` | Copy `app.py` and `index.html` into the image |
+| 6 | `USER` | Run the app as the non-root user |
+| 7 | `ARG` | A value you pass at **build** time (`APP_VERSION`) |
+| 8 | `ENV` | Settings the app reads at **run** time (ECS can override them) |
+| 9 | `EXPOSE` | Document the port (8080) |
+| 10 | `HEALTHCHECK` | How to check the app is alive (`/health`) |
+| 11 | `CMD` | The command that starts the app |
+
+That's all a container image is: a base + your files + how to start them.
 
 ### 2.4 Build the image
 ```bash
@@ -208,7 +226,7 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 2. Click the **task ID** → **Configuration** → copy the **Public IP**
 3. In a new browser tab, open `http://<public-ip>:8080` (**http**, not https)
 
-✅ Your page shows **Application version: v1**, **Running on: Amazon ECS on AWS Fargate**, and your region.
+✅ You see the workshop page (Siddhant College of Engineering, 30 Oct, 11:00 AM) and, in the **live** box, **Application version: v1**, **Running on: Amazon ECS on AWS Fargate**, the container hostname and your region.
 
 **Your container is now running on AWS, on a server you never had to create.**
 
@@ -348,7 +366,7 @@ Tests (no Docker or AWS needed): `pip install pytest && pytest -q`
 ---
 
 ## Security notes
-- The container runs as a **non-root user** (`USER cloudadhar` in the Dockerfile).
+- The container runs as a **non-root user** (`USER appuser` in the Dockerfile).
 - The image comes from **Amazon ECR Public** (`public.ecr.aws`), which avoids Docker Hub rate limits.
 - **No access keys** anywhere: CloudShell uses your Console sign-in, and ECS uses the task execution role.
 - Port 8080 is open to the internet only for this workshop. In production, put an ALB in front and keep tasks in private subnets.

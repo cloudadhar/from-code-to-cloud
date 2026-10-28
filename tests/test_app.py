@@ -56,4 +56,4 @@ def test_unknown_path_is_404(server):
 def test_docker_image_only_copies_app_files():
     dockerfile = (ROOT / "Dockerfile").read_text()
     assert "COPY app.py index.html ./" in dockerfile
-    assert "USER cloudadhar" in dockerfile
+    assert "USER appuser" in dockerfile

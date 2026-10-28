@@ -3,69 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My First Container on AWS</title>
+  <title>Deploy Your First App on Amazon ECS Fargate</title>
   <style>
     :root {
-      color-scheme: light;
-      --navy: #172b4d;
-      --blue: #2f80ed;
-      --orange: #ec7211;
-      --cloud: #f3f8ff;
-      --line: #d7e5f5;
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #0b1a2e;
+      --line: #1d4f7a;
+      --cyan: #29b6f6;
+      --cyan-soft: #8fd8ff;
+      --text: #e8f1fb;
+      --muted: #9fb3c8;
+      --orange: #ff9900;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: Inter, Arial, sans-serif;
-      color: var(--navy);
-      background: linear-gradient(145deg, #eaf4ff, #ffffff 55%, #fff3e7);
+      padding: 24px 16px;
+      font-family: "Segoe UI", Inter, Arial, sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(rgba(41,182,246,.05) 1px, transparent 1px) 0 0 / 40px 40px,
+        linear-gradient(90deg, rgba(41,182,246,.05) 1px, transparent 1px) 0 0 / 40px 40px,
+        var(--bg);
     }
-    main {
-      width: min(820px, 100%);
-      padding: clamp(24px, 6vw, 48px);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: rgba(255,255,255,.96);
-      box-shadow: 0 24px 70px rgba(23,43,77,.14);
+    main { width: min(980px, 100%); margin: 0 auto; }
+    .mono { font-family: "Courier New", ui-monospace, monospace; }
+    .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+    .brand { font-weight: 800; font-size: 20px; line-height: 1.2; }
+    .brand span { color: var(--orange); }
+    .group { padding: 12px 18px; background: var(--cyan); color: #04223a; font-weight: 700; letter-spacing: .08em; }
+    .eyebrow { margin: 48px 0 0; color: var(--cyan); font-size: clamp(18px, 3vw, 26px); letter-spacing: .25em; font-weight: 700; }
+    h1 { margin: 8px 0 0; font-size: clamp(44px, 10vw, 92px); line-height: 1; font-weight: 900; }
+    h1 .cursor { color: var(--cyan); }
+    h2 { margin: 12px 0 0; font-size: clamp(24px, 4.5vw, 42px); line-height: 1.15; font-weight: 800; }
+    h2 span { color: var(--cyan); }
+    .rule { width: 110px; height: 5px; background: var(--cyan); margin: 26px 0; }
+    .lead { font-size: clamp(16px, 2.4vw, 20px); line-height: 1.6; color: var(--cyan-soft); max-width: 720px; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 28px 0; }
+    .step { padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font-weight: 700; }
+    .arrow { color: var(--cyan); font-weight: 900; }
+    .event {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+      padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(11,26,46,.85);
     }
-    .eyebrow { color: var(--blue); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    h1 { margin: 12px 0; font-size: clamp(32px, 6vw, 54px); line-height: 1.05; }
-    h1 span { color: var(--orange); }
-    .lead { font-size: 20px; line-height: 1.6; }
-    .services { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0; }
-    .pill { padding: 10px 14px; border-radius: 999px; background: var(--cloud); border: 1px solid var(--line); font-weight: 750; }
-    .version { display: inline-block; padding: 10px 14px; border-radius: 10px; color: white; background: var(--navy); font-weight: 800; }
-    .runtime { margin-top: 22px; padding: 18px; border-left: 4px solid var(--blue); background: var(--cloud); border-radius: 10px; }
-    .runtime p { margin: 7px 0; overflow-wrap: anywhere; }
-    code { color: #174a7e; font-weight: 750; }
-    footer { margin-top: 30px; color: #52627a; }
+    .event .label { color: var(--cyan); font-weight: 800; letter-spacing: .1em; font-size: 14px; }
+    .event .value { margin-top: 6px; font-size: 18px; line-height: 1.4; }
+    .live {
+      margin-top: 22px; padding: 20px 22px; border: 1px solid var(--cyan); border-radius: 18px;
+      background: linear-gradient(135deg, rgba(41,182,246,.12), rgba(11,26,46,.9));
+    }
+    .live h3 { margin: 0 0 12px; font-size: 16px; letter-spacing: .12em; color: var(--cyan); }
+    .version { display: inline-block; margin-bottom: 12px; padding: 8px 14px; border-radius: 10px; background: var(--orange); color: #1a1000; font-weight: 900; font-size: 18px; }
+    .live p { margin: 6px 0; overflow-wrap: anywhere; }
+    .live code { color: var(--cyan-soft); font-weight: 700; }
+    footer { margin: 28px 0 8px; text-align: center; color: var(--muted); }
+    footer a { color: var(--cyan); font-weight: 700; text-decoration: none; }
   </style>
 </head>
 <body>
   <main>
-    <div class="eyebrow">CloudAdhar Hands-on Workshop</div>
-    <h1>My First Container <span>on AWS</span></h1>
-    <!-- Part 8: change the line below to your own message, then build v2 -->
-    <p class="lead">Built with Docker, stored in Amazon ECR, running on Amazon ECS with AWS Fargate.</p>
-    <div class="services">
-      <span class="pill">Docker</span>
-      <span class="pill">Amazon ECR</span>
-      <span class="pill">Amazon ECS</span>
-      <span class="pill">AWS Fargate</span>
-      <span class="pill">CloudWatch Logs</span>
+    <div class="top">
+      <div class="brand">AWS Student <span>Builder Groups</span></div>
+      <div class="group mono">AWS STUDENT BUILDER GROUP<br>SIDDHANT COLLEGE OF ENGINEERING</div>
     </div>
-    <div class="version">Application version: {{APP_VERSION}}</div>
-    <div class="runtime">
+
+    <p class="eyebrow mono">DEPLOY YOUR FIRST</p>
+    <h1>APP<span class="cursor">_</span></h1>
+    <h2>ON <span>AMAZON ECS FARGATE</span><br>WITH <span>DOCKER &amp; AMAZON ECR</span></h2>
+    <div class="rule"></div>
+
+    <!-- Part 8: change the line below to your own message, then build v2 -->
+    <p class="lead mono">Hands-on Workshop: write a Dockerfile, build the image, push it to Amazon ECR and run it on Amazon ECS with AWS Fargate.</p>
+
+    <div class="flow">
+      <span class="step">📝 Dockerfile</span><span class="arrow">→</span>
+      <span class="step">🐳 docker build</span><span class="arrow">→</span>
+      <span class="step">📦 Amazon ECR</span><span class="arrow">→</span>
+      <span class="step">📋 Task definition</span><span class="arrow">→</span>
+      <span class="step">🚀 ECS Fargate service</span>
+    </div>
+
+    <section class="event">
+      <div><div class="label">DATE</div><div class="value">30th October 2026<br>(Friday)</div></div>
+      <div><div class="label">TIME</div><div class="value">11:00 AM</div></div>
+      <div><div class="label">VENUE</div><div class="value">Seminar Hall,<br>Siddhant College of Engineering</div></div>
+    </section>
+
+    <section class="live">
+      <h3 class="mono">THIS PAGE IS SERVED LIVE BY YOUR CONTAINER</h3>
+      <div class="version">Application version: {{APP_VERSION}}</div>
       <p>Running on: <code>{{PLATFORM}}</code></p>
       <p>Container hostname: <code>{{HOSTNAME}}</code></p>
       <p>AWS Region: <code>{{AWS_REGION}}</code></p>
-    </div>
+    </section>
+
     <footer>
-      Built by <a href="https://youtube.com/@cloudadhar">CloudAdhar</a>, Building Cloud Futures
+      Follow us on Instagram <a href="https://instagram.com/aws.scoe">@aws.scoe</a>
+      &nbsp;|&nbsp; Speaker: Gangadhar Ure, <a href="https://youtube.com/@cloudadhar">CloudAdhar</a>
     </footer>
   </main>
 </body>
