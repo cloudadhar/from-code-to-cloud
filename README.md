@@ -12,7 +12,7 @@ You'll take a small web app, **package it as a container**, **store it in Amazon
 - 📜 **Amazon CloudWatch Logs** shows what your container prints
 - 🖥️ **AWS CloudShell** is a terminal in your browser with Docker already installed, so nothing is installed on your laptop
 
-Every AWS step uses the **AWS Console**. No access keys, nothing to install.
+Every AWS step uses the **AWS Console**. The only commands you type are in **CloudShell**, the terminal inside the Console. No GitHub, no access keys, nothing to install.
 
 > Built by **[CloudAdhar](https://youtube.com/@cloudadhar)**, Building Cloud Futures
 
@@ -93,10 +93,15 @@ Full checklist: **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)**
 3. Wait about 30 seconds for the terminal.
 
 ### 2.2 Get the code
+1. Download **`from-code-to-cloud.zip`** to your laptop (the instructor shares it in the WhatsApp group).
+2. In CloudShell, click **Actions** (top right) → **Upload file** → choose the zip → **Upload**. It lands in your home folder. (Already uploaded it at home? Run `ls`. If you see the zip, skip this step.)
+3. Unzip it and go into the folder:
 ```bash
-git clone https://github.com/cloudadhar/from-code-to-cloud.git
+unzip from-code-to-cloud.zip
 cd from-code-to-cloud
+ls
 ```
+✅ You see `Dockerfile`, `app.py` and `index.html`.
 
 ### 2.3 Read the Dockerfile
 ```bash
@@ -152,7 +157,7 @@ docker stop web && docker rm web
 3. Keep the other settings as they are → **Create**
 
 ### 3.2 Push the image (CloudShell)
-Open your new repository and click **View push commands**. These are the same commands, ready to copy:
+Open your new repository and click **View push commands**. The Console gives you the commands to copy. They do the same as these:
 
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -296,7 +301,7 @@ docker push $REPO:v2
 ## Part 9: What just happened? (recap)
 
 ```
-Code (GitHub) ──docker build──▶ Image ──docker push──▶ ECR ──pull──▶ ECS Fargate task
+Code (zip)    ──docker build──▶ Image ──docker push──▶ ECR ──pull──▶ ECS Fargate task
                                                                        ▲
                                      Service keeps N tasks running ────┘
 ```

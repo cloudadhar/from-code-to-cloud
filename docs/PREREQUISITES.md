@@ -14,15 +14,35 @@ Please finish this **before** the session. It takes about 10 minutes.
 - [ ] Top-right of the Console: **Asia Pacific (Mumbai) ap-south-1**. Use it for every step.
 
 ## 3. CloudShell and Docker work
-- [ ] Click the **CloudShell icon `>_`** in the top bar and wait for the terminal.
-- [ ] Run:
-  ```bash
-  docker --version
-  aws sts get-caller-identity
-  ```
-  ✅ A Docker version number, and your account ID.
+CloudShell is a terminal inside the AWS Console. It already has Docker and the AWS CLI, so you install nothing.
 
-## 4. ECS is ready
+1. - [ ] Check the region (top right) says **Asia Pacific (Mumbai)**.
+2. - [ ] Click the **CloudShell icon `>_`** in the top bar, next to the search box. (Or type `CloudShell` in the search box and open it.)
+3. - [ ] First time only: a **Welcome to AWS CloudShell** box appears. Click **Close**.
+4. - [ ] Wait about 30 seconds until you see a prompt like `[cloudshell-user@ip-10-...  ~]$`.
+5. - [ ] Click in the terminal, paste this line and press **Enter**:
+   ```bash
+   docker --version
+   ```
+   ✅ You see something like `Docker version 25.0.x`.
+6. - [ ] Paste this line and press **Enter**:
+   ```bash
+   aws sts get-caller-identity
+   ```
+   ✅ You see your 12-digit **Account** number, and an **Arn** ending in `user/<your-name>` (not `root`).
+
+> To paste in CloudShell, use **Ctrl+Shift+V** on Windows/Linux or **Cmd+V** on Mac. If the browser asks to allow pasting, click **Allow**.
+
+## 4. Download the workshop code and test the upload
+1. - [ ] Download **`from-code-to-cloud.zip`** from the WhatsApp group to your laptop. Don't unzip it.
+2. - [ ] In CloudShell, click **Actions** (top right of the CloudShell window) → **Upload file** → **Choose file** → pick the zip → **Upload**.
+3. - [ ] Run:
+   ```bash
+   ls
+   ```
+   ✅ You see `from-code-to-cloud.zip`. That's all for now. You'll unzip it in the workshop.
+
+## 5. ECS is ready
 - [ ] Open **Elastic Container Service (ECS)** in the Console and check that the page loads without an error.
 
 ## Cost
