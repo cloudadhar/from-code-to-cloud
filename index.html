@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Deploy Your First App on Amazon ECS Fargate</title>
+  <title>From Code to Cloud</title>
   <style>
     :root {
       color-scheme: dark;
@@ -35,7 +35,7 @@
     .brand span { color: var(--orange); }
     .group { padding: 12px 18px; background: var(--cyan); color: #04223a; font-weight: 700; letter-spacing: .08em; }
     .eyebrow { margin: 48px 0 0; color: var(--cyan); font-size: clamp(18px, 3vw, 26px); letter-spacing: .25em; font-weight: 700; }
-    h1 { margin: 8px 0 0; font-size: clamp(44px, 10vw, 92px); line-height: 1; font-weight: 900; }
+    h1 { margin: 8px 0 0; font-size: clamp(38px, 8vw, 76px); line-height: 1; font-weight: 900; }
     h1 .cursor { color: var(--cyan); }
     h2 { margin: 12px 0 0; font-size: clamp(24px, 4.5vw, 42px); line-height: 1.15; font-weight: 800; }
     h2 span { color: var(--cyan); }
@@ -44,12 +44,6 @@
     .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 28px 0; }
     .step { padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); font-weight: 700; }
     .arrow { color: var(--cyan); font-weight: 900; }
-    .event {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
-      padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(11,26,46,.85);
-    }
-    .event .label { color: var(--cyan); font-weight: 800; letter-spacing: .1em; font-size: 14px; }
-    .event .value { margin-top: 6px; font-size: 18px; line-height: 1.4; }
     .live {
       margin-top: 22px; padding: 20px 22px; border: 1px solid var(--cyan); border-radius: 18px;
       background: linear-gradient(135deg, rgba(41,182,246,.12), rgba(11,26,46,.9));
@@ -93,13 +87,13 @@
       <button class="celebrate" type="button" onclick="launchShow()">🎆 Celebrate again</button>
     </section>
 
-    <p class="eyebrow mono">DEPLOY YOUR FIRST</p>
-    <h1>APP<span class="cursor">_</span></h1>
-    <h2>ON <span>AMAZON ECS FARGATE</span><br>WITH <span>DOCKER &amp; AMAZON ECR</span></h2>
+    <p class="eyebrow mono">HANDS-ON WORKSHOP</p>
+    <h1>From Code to Cloud<span class="cursor">_</span></h1>
+    <h2>Deploy a Containerised App with <span>Amazon ECR</span> &amp; <span>ECS Fargate</span></h2>
     <div class="rule"></div>
 
     <!-- Part 8: change the line below to your own message, then build v2 -->
-    <p class="lead mono">Hands-on Workshop: write a Dockerfile, build the image, push it to Amazon ECR and run it on Amazon ECS with AWS Fargate.</p>
+    <p class="lead mono">This app was written as code, packaged with a Dockerfile, pushed to Amazon ECR and is now running on Amazon ECS with AWS Fargate, with no servers to manage.</p>
 
     <div class="flow">
       <span class="step">📝 Dockerfile</span><span class="arrow">→</span>
@@ -109,18 +103,11 @@
       <span class="step">🚀 ECS Fargate service</span>
     </div>
 
-    <section class="event">
-      <div><div class="label">DATE</div><div class="value">30th October 2026<br>(Friday)</div></div>
-      <div><div class="label">TIME</div><div class="value">11:00 AM</div></div>
-      <div><div class="label">VENUE</div><div class="value">Seminar Hall,<br>Siddhant College of Engineering</div></div>
-    </section>
 
     <section class="live">
       <h3 class="mono">THIS PAGE IS SERVED LIVE BY YOUR CONTAINER</h3>
       <div class="version">Application version: {{APP_VERSION}}</div>
-      <p>Running on: <code>{{PLATFORM}}</code></p>
-      <p>Container hostname: <code>{{HOSTNAME}}</code></p>
-      <p>AWS Region: <code>{{AWS_REGION}}</code></p>
+{{RUNTIME}}
     </section>
 
     <footer>

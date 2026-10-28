@@ -7,7 +7,7 @@
 FROM public.ecr.aws/docker/library/python:3.12-alpine
 
 # 2. LABEL: information about the image (shown by `docker inspect`).
-LABEL org.opencontainers.image.title="Deploy Your First App on Amazon ECS Fargate" \
+LABEL org.opencontainers.image.title="From Code to Cloud: Deploy a Containerised App with ECR & ECS Fargate" \
       org.opencontainers.image.description="AWS Student Builder Group, Siddhant College of Engineering workshop app"
 
 # 3. WORKDIR: the folder inside the container where our app lives.
@@ -30,10 +30,9 @@ USER appuser
 ARG APP_VERSION=v1
 
 # 8. ENV: environment variables available to the app at RUN time.
-#    ECS can override these in the task definition (we set PLATFORM there).
+#    ECS can override these in the task definition.
 ENV PORT=8080 \
-    APP_VERSION=${APP_VERSION} \
-    PLATFORM="Local container"
+    APP_VERSION=${APP_VERSION}
 
 # 9. EXPOSE: documents the port the app listens on.
 #    It doesn't open anything by itself: `docker run -p` or the ECS port mapping does.

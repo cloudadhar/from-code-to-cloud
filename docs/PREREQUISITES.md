@@ -1,6 +1,6 @@
 # Before the Workshop: Prerequisites Checklist
 
-**Workshop:** Deploy Your First App on Amazon ECS Fargate (hands-on with Docker & Amazon ECR)
+**Workshop:** From Code to Cloud: Deploy a Containerised App with Amazon ECR & ECS Fargate
 **When:** 30 October 2026 (Friday), 11:00 AM · Seminar Hall, Siddhant College of Engineering
 
 Please finish this **before** the session. It takes about 10 minutes.

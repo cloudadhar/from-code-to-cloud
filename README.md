@@ -1,6 +1,6 @@
-# Deploy Your First App on Amazon ECS Fargate
+# From Code to Cloud
 
-### Hands-on Workshop with Docker & Amazon ECR
+### Deploy a Containerised App with Amazon ECR & ECS Fargate
 
 **AWS Student Builder Group, Siddhant College of Engineering** · 30 October 2026 (Friday), 11:00 AM · Seminar Hall · Instagram [@aws.scoe](https://instagram.com/aws.scoe)
 
@@ -129,11 +129,11 @@ docker images cloudadhar-first-container
 
 ### 2.5 Run it and test it
 ```bash
-docker run -d --name web -p 8080:8080 -e PLATFORM="AWS CloudShell" cloudadhar-first-container:v1
+docker run -d --name web -p 8080:8080 cloudadhar-first-container:v1
 curl http://localhost:8080/health
 curl -s http://localhost:8080 | grep -E "version|Running on"
 ```
-✅ `{"status": "healthy"}` and `Application version: v1`, `Running on: AWS CloudShell`.
+✅ `{"status": "healthy"}` and `Application version: v1`, `Running on: Local Docker container`.
 
 Stop and remove it:
 ```bash
@@ -195,11 +195,10 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 7. **Container – 1:**
    - **Name:** `web` · **Image URI:** *(paste from 3.3, ending in `:v1`)* · **Essential container:** Yes
    - **Port mappings:** **Container port** `8080` · **Protocol** TCP · **App protocol** HTTP
-   - **Environment variables** → **Add environment variable**: **Key** `PLATFORM` · **Value** `Amazon ECS on AWS Fargate`
    - **Log collection:** keep **Use log collection** ticked (Amazon CloudWatch)
 8. **Create**
 
-> 👀 Notice we **don't** set `APP_VERSION` here. The version comes from the image, so in Part 8 the new image shows its own version.
+> 👀 Notice we **don't** set any environment variables. The version comes from the image, and the app reads the real cluster, task and network details from the **ECS task metadata endpoint**, which ECS gives every task automatically.
 
 ---
 
@@ -226,7 +225,7 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 2. Click the **task ID** → **Configuration** → copy the **Public IP**
 3. In a new browser tab, open `http://<public-ip>:8080` (**http**, not https)
 
-✅ You see the workshop page (Siddhant College of Engineering, 30 Oct, 11:00 AM) and, in the **live** box, **Application version: v1**, **Running on: Amazon ECS on AWS Fargate**, the container hostname and your region.
+✅ You see the welcome page with fireworks 🎆 and, in the **live** box, real details read from ECS: **Running on: Amazon ECS on AWS Fargate**, your **cluster**, **task ID**, **task definition** (`cloudadhar-first-container:1`), **image** (`...:v1`), **Availability Zone**, **private IP**, **CPU/memory** and **region**. Match them with what you see in the Console!
 
 **Your container is now running on AWS, on a server you never had to create.**
 
@@ -247,7 +246,7 @@ Everything your container prints goes to **CloudWatch Logs** automatically. That
 ### 7.1 Break it on purpose
 1. **Tasks** tab → select the running task → **Stop** → **Stop selected**
 2. Watch the **Tasks** tab (refresh). Within about a minute, ECS starts a **new task** by itself.
-3. Open the new task's **Public IP** on port 8080. ✅ It works again, with a **new hostname**.
+3. Open the new task's **Public IP** on port 8080. ✅ It works again, with a **new task ID and private IP**, maybe in a different Availability Zone.
 
 > 💡 The **service** promised "always 1 task running". When one stopped, ECS replaced it. Nobody had to wake up at 3 AM.
 >
@@ -256,7 +255,7 @@ Everything your container prints goes to **CloudWatch Logs** automatically. That
 ### 7.2 Scale out
 1. **Services** → `cloudadhar-web` → **Update service**
 2. **Desired tasks:** `2` → **Update**
-3. ✅ Two tasks run. Open each Public IP: same app, **different hostnames**.
+3. ✅ Two tasks run. Open each Public IP: same app, **different task IDs**, often in **different Availability Zones**.
 
 Set **Desired tasks** back to `1` when you're done, to save cost.
 
@@ -288,7 +287,7 @@ docker push $REPO:v2
 3. **Clusters** → `cloudadhar-cluster` → **Services** → `cloudadhar-web` → **Update service**
 4. **Revision:** choose the new one (2) → **Update**
 5. Open the **Deployments** tab: ECS starts a v2 task, checks it is running, then stops the v1 task. This is a **rolling deployment**.
-6. Open the new task's Public IP. ✅ **Application version: v2** with your message!
+6. Open the new task's Public IP. ✅ **Application version: v2** with your message, **Task definition** `cloudadhar-first-container:2` and **Image** ending in `:v2`!
 
 > Something wrong with v2? Update the service back to revision 1. That's a **rollback**, in one click.
 
