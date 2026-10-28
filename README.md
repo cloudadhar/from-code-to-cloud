@@ -67,10 +67,8 @@ from-code-to-cloud/
 ├── index.html        <- the page you'll see (you'll edit it in Part 8)
 ├── Dockerfile        <- the recipe to build the image
 ├── .dockerignore     <- files kept out of the image
-├── tests/            <- optional offline tests
 └── docs/
-    ├── PREREQUISITES.md
-    └── INSTRUCTOR_NOTES.md
+    └── PREREQUISITES.md
 ```
 
 ---
@@ -364,8 +362,6 @@ docker build -t from-code-to-cloud:v1 .
 docker run --rm -p 8080:8080 from-code-to-cloud:v1
 ```
 Then open http://localhost:8080.
-
-Tests (no Docker or AWS needed): `pip install pytest && pytest -q`
 
 ---
 
