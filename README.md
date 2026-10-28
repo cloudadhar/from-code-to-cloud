@@ -61,7 +61,7 @@ flowchart LR
 ## Repository structure
 
 ```
-cloudadhar-first-container/
+from-code-to-cloud/
 ├── README.md         <- full workshop guide (you are here)
 ├── app.py            <- tiny Python web server (/ and /health)
 ├── index.html        <- the page you'll see (you'll edit it in Part 8)
@@ -94,8 +94,8 @@ Full checklist: **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)**
 
 ### 2.2 Get the code
 ```bash
-git clone https://github.com/cloudadhar/cloudadhar-first-container.git
-cd cloudadhar-first-container
+git clone https://github.com/cloudadhar/from-code-to-cloud.git
+cd from-code-to-cloud
 ```
 
 ### 2.3 Read the Dockerfile
@@ -122,14 +122,14 @@ That's all a container image is: a base + your files + how to start them.
 
 ### 2.4 Build the image
 ```bash
-docker build -t cloudadhar-first-container:v1 .
-docker images cloudadhar-first-container
+docker build -t from-code-to-cloud:v1 .
+docker images from-code-to-cloud
 ```
-✅ You see `cloudadhar-first-container   v1` with a size of about 60 MB.
+✅ You see `from-code-to-cloud   v1` with a size of about 60 MB.
 
 ### 2.5 Run it and test it
 ```bash
-docker run -d --name web -p 8080:8080 cloudadhar-first-container:v1
+docker run -d --name web -p 8080:8080 from-code-to-cloud:v1
 curl http://localhost:8080/health
 curl -s http://localhost:8080 | grep -E "version|Running on"
 ```
@@ -148,7 +148,7 @@ docker stop web && docker rm web
 
 ### 3.1 Create the repository (Console)
 1. **Elastic Container Registry (ECR)** → **Private registry** → **Repositories** → **Create repository**
-2. **Repository name:** `cloudadhar-first-container`
+2. **Repository name:** `from-code-to-cloud`
 3. Keep the other settings as they are → **Create**
 
 ### 3.2 Push the image (CloudShell)
@@ -157,13 +157,13 @@ Open your new repository and click **View push commands**. These are the same co
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REGISTRY=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-REPO=$REGISTRY/cloudadhar-first-container
+REPO=$REGISTRY/from-code-to-cloud
 
 # 1. Log Docker in to your private ECR registry
 aws ecr get-login-password | docker login --username AWS --password-stdin $REGISTRY
 
 # 2. Give the image its ECR name, then push it
-docker tag cloudadhar-first-container:v1 $REPO:v1
+docker tag from-code-to-cloud:v1 $REPO:v1
 docker push $REPO:v1
 
 echo "Your image URI: $REPO:v1"
@@ -187,7 +187,7 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 
 ### 4.2 Create the task definition (the recipe)
 1. **ECS** → **Task definitions** → **Create new task definition** → **Create new task definition**
-2. **Task definition family:** `cloudadhar-first-container`
+2. **Task definition family:** `from-code-to-cloud`
 3. **Launch type:** **AWS Fargate** · **Operating system/Architecture:** **Linux/X86_64**
 4. **Task size:** **CPU** `.25 vCPU` · **Memory** `.5 GB`
 5. **Task role:** leave empty (our app doesn't call AWS)
@@ -206,7 +206,7 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 
 ### 5.1 Create the service
 1. **ECS** → **Clusters** → `cloudadhar-cluster` → **Services** tab → **Create**
-2. **Task definition family:** `cloudadhar-first-container` · **Revision:** latest
+2. **Task definition family:** `from-code-to-cloud` · **Revision:** latest
 3. **Service name:** `cloudadhar-web`
 4. **Compute options:** **Launch type** → **FARGATE**
 5. **Desired tasks:** `1`
@@ -225,7 +225,7 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 2. Click the **task ID** → **Configuration** → copy the **Public IP**
 3. In a new browser tab, open `http://<public-ip>:8080` (**http**, not https)
 
-✅ You see the welcome page with fireworks 🎆 and, in the **live** box, real details read from ECS: **Running on: Amazon ECS on AWS Fargate**, your **cluster**, **task ID**, **task definition** (`cloudadhar-first-container:1`), **image** (`...:v1`), **Availability Zone**, **private IP**, **CPU/memory** and **region**. Match them with what you see in the Console!
+✅ You see the welcome page with fireworks 🎆 and, in the **live** box, real details read from ECS: **Running on: Amazon ECS on AWS Fargate**, your **cluster**, **task ID**, **task definition** (`from-code-to-cloud:1`), **image** (`...:v1`), **Availability Zone**, **private IP**, **CPU/memory** and **region**. Match them with what you see in the Console!
 
 **Your container is now running on AWS, on a server you never had to create.**
 
@@ -265,7 +265,7 @@ Set **Desired tasks** back to `1` when you're done, to save cost.
 
 ### 8.1 Change the app (CloudShell)
 ```bash
-cd ~/cloudadhar-first-container
+cd ~/from-code-to-cloud
 nano index.html
 ```
 Find the line under `<!-- Part 8 ... -->` and change the text to your own message, e.g. `Deployed by Priya on ECS Fargate 🚀`. Save with `Ctrl+O`, `Enter`, exit with `Ctrl+X`.
@@ -273,7 +273,7 @@ Find the line under `<!-- Part 8 ... -->` and change the text to your own messag
 ### 8.2 Build and push v2
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REPO=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/cloudadhar-first-container
+REPO=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/from-code-to-cloud
 
 docker build --build-arg APP_VERSION=v2 -t $REPO:v2 .
 aws ecr get-login-password | docker login --username AWS --password-stdin ${REPO%%/*}
@@ -282,12 +282,12 @@ docker push $REPO:v2
 ✅ ECR now shows two tags: **v1** and **v2**.
 
 ### 8.3 Deploy v2 (Console)
-1. **ECS** → **Task definitions** → `cloudadhar-first-container` → select the latest revision → **Create new revision**
+1. **ECS** → **Task definitions** → `from-code-to-cloud` → select the latest revision → **Create new revision**
 2. In **Container – 1**, change the **Image URI** ending from `:v1` to `:v2` → **Create** (this is revision 2)
 3. **Clusters** → `cloudadhar-cluster` → **Services** → `cloudadhar-web` → **Update service**
 4. **Revision:** choose the new one (2) → **Update**
 5. Open the **Deployments** tab: ECS starts a v2 task, checks it is running, then stops the v1 task. This is a **rolling deployment**.
-6. Open the new task's Public IP. ✅ **Application version: v2** with your message, **Task definition** `cloudadhar-first-container:2` and **Image** ending in `:v2`!
+6. Open the new task's Public IP. ✅ **Application version: v2** with your message, **Task definition** `from-code-to-cloud:2` and **Image** ending in `:v2`!
 
 > Something wrong with v2? Update the service back to revision 1. That's a **rollback**, in one click.
 
@@ -315,10 +315,10 @@ Do these **in order**:
 |---|---|---|
 | 1 | Service `cloudadhar-web` | ECS → Clusters → `cloudadhar-cluster` → Services → select → **Delete service** → tick **Force delete** → type `delete` |
 | 2 | Cluster `cloudadhar-cluster` | ECS → Clusters → `cloudadhar-cluster` → **Delete cluster** (after the tasks have stopped) |
-| 3 | Task definition `cloudadhar-first-container` | ECS → Task definitions → select it → select all revisions → **Actions** → **Deregister**, then **Actions** → **Delete** |
-| 4 | ECR repository `cloudadhar-first-container` | ECR → Repositories → select → **Delete** → type `delete` (deletes the images too) |
+| 3 | Task definition `from-code-to-cloud` | ECS → Task definitions → select it → select all revisions → **Actions** → **Deregister**, then **Actions** → **Delete** |
+| 4 | ECR repository `from-code-to-cloud` | ECR → Repositories → select → **Delete** → type `delete` (deletes the images too) |
 | 5 | Security group `cloudadhar-web-sg` | EC2 → Security Groups → select → **Actions** → **Delete security groups** |
-| 6 | Log group `/ecs/cloudadhar-first-container` | CloudWatch → Log groups → select → **Actions** → **Delete** |
+| 6 | Log group `/ecs/from-code-to-cloud` | CloudWatch → Log groups → select → **Actions** → **Delete** |
 | 7 | *(optional)* IAM role `ecsTaskExecutionRole` | IAM → Roles → search → **Delete** (it's free, so keeping it is fine) |
 
 ✅ Check: **ECS → Clusters** is empty and **ECR → Repositories** is empty. No running tasks means no cost.
@@ -341,7 +341,7 @@ Do these **in order**:
 |---|---|
 | `docker: command not found` in CloudShell | Close the tab and reopen CloudShell; Docker is preinstalled in most regions. Try **ap-south-1** or **us-east-1** |
 | `no basic auth credentials` on `docker push` | Run the `aws ecr get-login-password ... docker login` line again (the login expires after 12 hours) |
-| `repository ... does not exist` on push | The ECR repo name or region doesn't match. It must be `cloudadhar-first-container` in the **same region** as CloudShell |
+| `repository ... does not exist` on push | The ECR repo name or region doesn't match. It must be `from-code-to-cloud` in the **same region** as CloudShell |
 | Task stops with `CannotPullContainerError` | **Public IP** was off, or the Image URI is wrong. Check the URI ends in `:v1`, and recreate the service with Public IP **Turned on** |
 | Task stops with `ResourceInitializationError` | Same as above: usually no public IP, so the task can't reach ECR |
 | Browser keeps loading / times out | Use `http://` (not https) and port `:8080`. Check the security group allows **TCP 8080** from **Anywhere** |
@@ -355,8 +355,8 @@ Do these **in order**:
 ## Run it on your own laptop (optional)
 
 ```bash
-docker build -t cloudadhar-first-container:v1 .
-docker run --rm -p 8080:8080 cloudadhar-first-container:v1
+docker build -t from-code-to-cloud:v1 .
+docker run --rm -p 8080:8080 from-code-to-cloud:v1
 ```
 Then open http://localhost:8080.
 

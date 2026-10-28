@@ -18,13 +18,13 @@ ROOT = Path(__file__).resolve().parent.parent
 FAKE_TASK = {
     "Cluster": "arn:aws:ecs:ap-south-1:123456789012:cluster/cloudadhar-cluster",
     "TaskARN": "arn:aws:ecs:ap-south-1:123456789012:task/cloudadhar-cluster/abc123",
-    "Family": "cloudadhar-first-container",
+    "Family": "from-code-to-cloud",
     "Revision": "2",
     "AvailabilityZone": "ap-south-1a",
     "Limits": {"CPU": 0.25, "Memory": 512},
 }
 FAKE_CONTAINER = {
-    "Image": "123456789012.dkr.ecr.ap-south-1.amazonaws.com/cloudadhar-first-container:v2",
+    "Image": "123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v2",
     "Networks": [{"IPv4Addresses": ["172.31.5.10"]}],
 }
 
@@ -104,8 +104,8 @@ def test_ecs_page_shows_real_task_details(ecs_app):
     assert "Running on: <code>Amazon ECS on AWS Fargate</code>" in page
     assert "Cluster: <code>cloudadhar-cluster</code>" in page
     assert "Task ID: <code>abc123</code>" in page
-    assert "Task definition: <code>cloudadhar-first-container:2</code>" in page
-    assert "cloudadhar-first-container:v2</code>" in page
+    assert "Task definition: <code>from-code-to-cloud:2</code>" in page
+    assert "from-code-to-cloud:v2</code>" in page
     assert "Availability Zone: <code>ap-south-1a</code>" in page
     assert "Private IP: <code>172.31.5.10</code>" in page
     assert "CPU / Memory: <code>0.25 vCPU / 512 MB</code>" in page
