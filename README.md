@@ -10,9 +10,10 @@ You'll take a small web app, **package it as a container**, **store it in Amazon
 - 📦 **Amazon ECR** is your private image registry on AWS
 - 🚀 **Amazon ECS + AWS Fargate** runs the container, so you never create or patch a server
 - 📜 **Amazon CloudWatch Logs** shows what your container prints
-- 🖥️ **AWS CloudShell** is a terminal in your browser with Docker already installed, so nothing is installed on your laptop
+- 🖥️ **AWS CloudShell** is a terminal in your browser with Docker already installed, so Docker isn't needed on your laptop
+- 📝 **VS Code** on your laptop is where you read this guide and edit the code
 
-Every AWS step uses the **AWS Console**. The only commands you type are in **CloudShell**, the terminal inside the Console. No GitHub, no access keys, nothing to install.
+Every AWS step uses the **AWS Console**. The only commands you type are in **CloudShell**, the terminal inside the Console. No GitHub, no access keys. The only thing on your laptop is VS Code.
 
 > Built by **[CloudAdhar](https://youtube.com/@cloudadhar)**, Building Cloud Futures
 
@@ -80,6 +81,7 @@ Full checklist: **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)**
 1. **Sign in** as an IAM user (or IAM Identity Center user) with **AdministratorAccess**. Not the root user.
 2. **Region:** top-right of the Console, choose **Asia Pacific (Mumbai) ap-south-1**. Use the **same region for every step**.
 3. **Open CloudShell** (the `>_` icon in the top bar) and run `docker --version`. ✅ You see a version number.
+4. **Get the code into VS Code:** unzip `from-code-to-cloud.zip` on your laptop, then in VS Code **File → Open Folder** → `from-code-to-cloud`. Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**) to read this guide nicely.
 
 ---
 
@@ -90,8 +92,10 @@ Full checklist: **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)**
 2. Click the **CloudShell icon `>_`** in the top bar (next to the search box).
 3. Wait about 30 seconds for the terminal.
 
-### 2.2 Get the code
-1. Download **`from-code-to-cloud.zip`** to your laptop (the instructor shares it in the WhatsApp group).
+### 2.2 Get the code into CloudShell
+You already have the code open in VS Code (Part 1). CloudShell needs its own copy, because that's where Docker runs.
+
+1. Have **`from-code-to-cloud.zip`** on your laptop (the instructor shares it in the WhatsApp group).
 2. In CloudShell, click **Actions** (top right) → **Upload file** → choose the zip → **Upload**. It lands in your home folder. (Already uploaded it at home? Run `ls`. If you see the zip, skip this step.)
 3. Unzip it and go into the folder:
 ```bash
@@ -102,10 +106,7 @@ ls
 ✅ You see `Dockerfile`, `app.py` and `index.html`.
 
 ### 2.3 Read the Dockerfile
-```bash
-cat Dockerfile
-```
-Every instruction has a numbered comment explaining it:
+In **VS Code**, open `Dockerfile`. Every instruction has a numbered comment explaining it:
 
 | # | Instruction | What it does |
 |---|---|---|
@@ -266,14 +267,21 @@ Set **Desired tasks** back to `1` when you're done, to save cost.
 
 ## Part 8: Ship version 2 (15 min)
 
-### 8.1 Change the app (CloudShell)
-```bash
-cd ~/from-code-to-cloud
-nano index.html
-```
-Find the line under `<!-- Part 8 ... -->` and change the text to your own message, e.g. `Deployed by Priya on ECS Fargate 🚀`. Save with `Ctrl+O`, `Enter`, exit with `Ctrl+X`.
+### 8.1 Change the app (VS Code)
+1. In **VS Code**, open `index.html`.
+2. Find the line under `<!-- Part 8 ... -->` and change the text to your own message, e.g. `Deployed by Priya on ECS Fargate 🚀`. Save with **Ctrl+S** (Mac: **Cmd+S**).
 
-### 8.2 Build and push v2
+### 8.2 Send the changed file to CloudShell
+1. In CloudShell, click **Actions** → **Upload file** → choose your edited `index.html` (in the `from-code-to-cloud` folder on your laptop) → **Upload**.
+2. It lands in your home folder. Move it into the project, replacing the old one, and check your message is there:
+```bash
+mv ~/index.html ~/from-code-to-cloud/index.html
+cd ~/from-code-to-cloud
+grep -n "Deployed by" index.html
+```
+✅ You see your own message. (Changed different words? `grep` for those instead.)
+
+### 8.3 Build and push v2
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REPO=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/from-code-to-cloud
@@ -284,7 +292,7 @@ docker push $REPO:v2
 ```
 ✅ ECR now shows two tags: **v1** and **v2**.
 
-### 8.3 Deploy v2 (Console)
+### 8.4 Deploy v2 (Console)
 1. **ECS** → **Task definitions** → `from-code-to-cloud` → select the latest revision → **Create new revision**
 2. In **Container – 1**, change the **Image URI** ending from `:v1` to `:v2` → **Create** (this is revision 2)
 3. **Clusters** → `cloudadhar-cluster` → **Services** → `cloudadhar-web` → **Update service**

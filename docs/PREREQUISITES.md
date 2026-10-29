@@ -33,16 +33,21 @@ CloudShell is a terminal inside the AWS Console. It already has Docker and the A
 
 > To paste in CloudShell, use **Ctrl+Shift+V** on Windows/Linux or **Cmd+V** on Mac. If the browser asks to allow pasting, click **Allow**.
 
-## 4. Download the workshop code and test the upload
-1. - [ ] Download **`from-code-to-cloud.zip`** from the WhatsApp group to your laptop. Don't unzip it.
-2. - [ ] In CloudShell, click **Actions** (top right of the CloudShell window) → **Upload file** → **Choose file** → pick the zip → **Upload**.
-3. - [ ] Run:
+## 4. Install VS Code
+- [ ] Install **Visual Studio Code** (free) from https://code.visualstudio.com if you don't have it. Nothing else to install.
+
+## 5. Download the code, open it in VS Code, and test the upload
+1. - [ ] Download **`from-code-to-cloud.zip`** from the WhatsApp group to your laptop. **Keep the zip**: you'll upload it to CloudShell.
+2. - [ ] Unzip a copy: on Windows right-click → **Extract All**, on Mac double-click it. You get a `from-code-to-cloud` folder.
+3. - [ ] In VS Code: **File → Open Folder** → choose the `from-code-to-cloud` folder that has `README.md` inside (on Windows it's often one folder deeper: `from-code-to-cloud\from-code-to-cloud`). Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**). ✅ You see the workshop guide.
+4. - [ ] In CloudShell, click **Actions** (top right of the CloudShell window) → **Upload file** → **Choose file** → pick the zip → **Upload**.
+5. - [ ] Run:
    ```bash
    ls
    ```
    ✅ You see `from-code-to-cloud.zip`. That's all for now. You'll unzip it in the workshop.
 
-## 5. ECS is ready
+## 6. ECS is ready
 - [ ] Open **Elastic Container Service (ECS)** in the Console and check that the page loads without an error.
 
 ## Cost
