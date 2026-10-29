@@ -3,7 +3,7 @@
 **Workshop:** From Code to Cloud: Deploy a Containerised App with Amazon ECR & ECS Fargate
 **When:** 30 October 2026 (Friday), 11:00 AM · Seminar Hall, Siddhant College of Engineering
 
-Please finish this **before** the session. It takes about 10 minutes.
+Please finish this **at home, before** the session. It takes 30–45 minutes, mostly downloads. College Wi-Fi is too slow for Docker Desktop, so don't leave it for the workshop.
 
 ## 1. An AWS account
 - [ ] You can sign in to the AWS Console. A **free account works** for this workshop.
@@ -13,41 +13,50 @@ Please finish this **before** the session. It takes about 10 minutes.
 ## 2. The right region
 - [ ] Top-right of the Console: **Asia Pacific (Mumbai) ap-south-1**. Use it for every step.
 
-## 3. CloudShell and Docker work
-CloudShell is a terminal inside the AWS Console. It already has Docker and the AWS CLI, so you install nothing.
+## 3. Install VS Code
+1. - [ ] Download and install **Visual Studio Code** (free): https://code.visualstudio.com
+2. - [ ] Open it. ✅ It starts.
 
-1. - [ ] Check the region (top right) says **Asia Pacific (Mumbai)**.
-2. - [ ] Click the **CloudShell icon `>_`** in the top bar, next to the search box. (Or type `CloudShell` in the search box and open it.)
-3. - [ ] First time only: a **Welcome to AWS CloudShell** box appears. Click **Close**.
-4. - [ ] Wait about 30 seconds until you see a prompt like `[cloudshell-user@ip-10-...  ~]$`.
-5. - [ ] Click in the terminal, paste this line and press **Enter**:
+## 4. Install Docker Desktop
+1. - [ ] Download **Docker Desktop**: https://www.docker.com/products/docker-desktop/
+   - **Windows:** run the installer and keep **Use WSL 2** ticked. Restart when asked.
+   - **Mac:** pick **Apple chip** (M1–M4) or **Intel chip** (Apple menu → **About This Mac** tells you). Drag Docker to Applications.
+2. - [ ] Open **Docker Desktop**, accept the terms (you can skip signing in) and wait for **Engine running** (green, bottom left).
+
+> 🪟 Windows error about **virtualization** or **WSL**? Turn on virtualization in your BIOS (often called *Intel VT-x* or *AMD-V/SVM*), then in **PowerShell as administrator** run `wsl --update` and restart. Still stuck? Send a screenshot to the instructor. You can use CloudShell instead (Plan B in the README).
+
+## 5. Install the AWS CLI (version 2.32 or newer)
+1. - [ ] Follow the installer for your OS: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+   - **Windows:** download and run the **MSI installer**.
+   - **Mac:** download and run the **macOS .pkg installer**.
+2. - [ ] **Close and reopen VS Code** so it finds the new tools.
+
+## 6. Get the code and check everything in VS Code
+1. - [ ] Download **`from-code-to-cloud.zip`** from the WhatsApp group and unzip it (Windows: right-click → **Extract All**; Mac: double-click).
+2. - [ ] VS Code → **File → Open Folder** → the `from-code-to-cloud` folder that has `README.md` inside (on Windows it's often one folder deeper: `from-code-to-cloud\from-code-to-cloud`).
+3. - [ ] Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**). ✅ You see the workshop guide.
+4. - [ ] **Terminal → New Terminal**, then run these one at a time:
    ```bash
    docker --version
+   aws --version
+   docker run --rm hello-world
    ```
-   ✅ You see something like `Docker version 25.0.x`.
-6. - [ ] Paste this line and press **Enter**:
+   ✅ A Docker version, `aws-cli/2.32` or higher, and `Hello from Docker!`.
+
+## 7. Sign the AWS CLI in (no access keys)
+1. - [ ] In the VS Code terminal:
+   ```bash
+   aws configure set region ap-south-1
+   aws login
+   ```
+2. - [ ] Your browser opens. Pick your Console session (or sign in as your IAM user) → **Allow**.
+3. - [ ] Back in the terminal:
    ```bash
    aws sts get-caller-identity
    ```
    ✅ You see your 12-digit **Account** number, and an **Arn** ending in `user/<your-name>` (not `root`).
 
-> To paste in CloudShell, use **Ctrl+Shift+V** on Windows/Linux or **Cmd+V** on Mac. If the browser asks to allow pasting, click **Allow**.
-
-## 4. Install VS Code
-- [ ] Install **Visual Studio Code** (free) from https://code.visualstudio.com if you don't have it. Nothing else to install.
-
-## 5. Download the code, open it in VS Code, and test the upload
-1. - [ ] Download **`from-code-to-cloud.zip`** from the WhatsApp group to your laptop. **Keep the zip**: you'll upload it to CloudShell.
-2. - [ ] Unzip a copy: on Windows right-click → **Extract All**, on Mac double-click it. You get a `from-code-to-cloud` folder.
-3. - [ ] In VS Code: **File → Open Folder** → choose the `from-code-to-cloud` folder that has `README.md` inside (on Windows it's often one folder deeper: `from-code-to-cloud\from-code-to-cloud`). Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**). ✅ You see the workshop guide.
-4. - [ ] In CloudShell, click **Actions** (top right of the CloudShell window) → **Upload file** → **Choose file** → pick the zip → **Upload**.
-5. - [ ] Run:
-   ```bash
-   ls
-   ```
-   ✅ You see `from-code-to-cloud.zip`. That's all for now. You'll unzip it in the workshop.
-
-## 6. ECS is ready
+## 8. ECS is ready
 - [ ] Open **Elastic Container Service (ECS)** in the Console and check that the page loads without an error.
 
 ## Cost
