@@ -32,8 +32,10 @@ Please finish this **at home, before** the session. It takes 30–45 minutes, mo
 2. - [ ] **Close and reopen VS Code** so it finds the new tools.
 
 ## 6. Get the code and check everything in VS Code
-1. - [ ] Download **`from-code-to-cloud.zip`** from the WhatsApp group and unzip it (Windows: right-click → **Extract All**; Mac: double-click).
-2. - [ ] VS Code → **File → Open Folder** → the `from-code-to-cloud` folder that has `README.md` inside (on Windows it's often one folder deeper: `from-code-to-cloud\from-code-to-cloud`).
+1. - [ ] Get the code, either way:
+   - **Download ZIP (easiest):** open https://github.com/cloudadhar/from-code-to-cloud → green **Code** button → **Download ZIP** → unzip it (Windows: right-click → **Extract All**; Mac: double-click). No GitHub account needed.
+   - **Or, if you have Git:** `git clone https://github.com/cloudadhar/from-code-to-cloud.git`
+2. - [ ] VS Code → **File → Open Folder** → the project folder with `README.md` directly inside (`from-code-to-cloud-main` for the ZIP; on Windows it's often one folder deeper: `from-code-to-cloud-main\from-code-to-cloud-main`).
 3. - [ ] Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**). ✅ You see the workshop guide.
 4. - [ ] **Terminal → New Terminal**, then run these one at a time:
    ```bash

@@ -106,10 +106,19 @@ Full checklist with screenshots-level detail: **[docs/PREREQUISITES.md](docs/PRE
 2. **Region:** top-right of the Console, choose **Asia Pacific (Mumbai) ap-south-1**. Use the **same region for every step**.
 
 ### 1.3 Get the code into VS Code
-1. Download **`from-code-to-cloud.zip`** (the instructor shares it in the WhatsApp group) and unzip it.
-2. In VS Code: **File → Open Folder** → the `from-code-to-cloud` folder that has `README.md` inside.
-3. Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**) to read this guide nicely.
-4. Open the terminal: **Terminal → New Terminal**. Every command in this guide runs there, inside the `from-code-to-cloud` folder.
+**Option A: Download ZIP (easiest, nothing to install)**
+1. Open **https://github.com/cloudadhar/from-code-to-cloud** → green **Code** button → **Download ZIP**. No GitHub account needed.
+2. Unzip it (Windows: right-click → **Extract All**; Mac: double-click). You get a folder called `from-code-to-cloud-main`.
+
+**Option B: `git clone` (if you already have Git)**
+```bash
+git clone https://github.com/cloudadhar/from-code-to-cloud.git
+```
+
+Then:
+1. In VS Code: **File → Open Folder** → the project folder (`from-code-to-cloud-main` or `from-code-to-cloud`, the one with `README.md` directly inside).
+2. Open `README.md` and press **Ctrl+Shift+V** (Mac: **Cmd+Shift+V**) to read this guide nicely.
+3. Open the terminal: **Terminal → New Terminal**. Every command in this guide runs there, inside the project folder.
 
 ---
 
@@ -407,9 +416,9 @@ Do these **in order**:
 **CloudShell** is a terminal in the AWS Console with Docker and the AWS CLI already installed. You don't need `aws login` there.
 
 1. Console (region **ap-south-1**) → click the **CloudShell icon `>_`** in the top bar.
-2. **Actions** → **Upload file** → choose `from-code-to-cloud.zip`. Then:
+2. Get the code (Git is already installed in CloudShell):
 ```bash
-unzip from-code-to-cloud.zip
+git clone https://github.com/cloudadhar/from-code-to-cloud.git
 cd from-code-to-cloud
 ```
 3. Run the same `docker` and `aws ecr` commands from Parts 2–3 there. You can't open `localhost` from CloudShell, so test with `curl http://localhost:8080/health` instead.
