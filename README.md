@@ -10,12 +10,9 @@ You'll take a small web app, **package it as a container**, **store it in Amazon
 - 📦 **Amazon ECR** is your private image registry on AWS
 - 🚀 **Amazon ECS + AWS Fargate** runs the container, so you never create or patch a server
 - 📜 **Amazon CloudWatch Logs** shows what your container prints
-- 🛠️ **Three ways to build and push the image.** Pick the one that works for you ([Pick your build path](#pick-your-build-path)):
-  - **A. Your laptop:** Docker Desktop + AWS CLI, in the VS Code terminal
-  - **B. AWS CloudShell:** a terminal in the Console with Docker built in. Nothing to install
-  - **C. A pipeline:** GitHub Actions builds, pushes and deploys for you
+- 💻 You build the image on **your laptop** with Docker. No Docker? Use **AWS CloudShell** in the browser instead ([Laptop or CloudShell?](#pick-your-build-path))
 
-Every AWS resource is created in the **AWS Console**. **No access keys** anywhere: the laptop uses `aws login`, CloudShell uses your Console sign-in, and the pipeline uses OIDC.
+Every AWS resource is created in the **AWS Console**. No access keys.
 
 > Built by **[CloudAdhar](https://youtube.com/@cloudadhar)**, Building Cloud Futures
 
@@ -24,13 +21,13 @@ Every AWS resource is created in the **AWS Console**. **No access keys** anywher
 ## Your path in 8 steps
 | # | Step | Where | Part |
 |---|---|---|---|
-| 1 | Get ready and **pick your build path**: laptop, CloudShell or pipeline | Laptop / Console | [1](#part-1-before-the-workshop-3045-min-at-home), [Pick](#pick-your-build-path) |
+| 1 | Get ready: laptop with Docker, or CloudShell | Laptop / Console | [1](#part-1-before-the-workshop-3045-min-at-home), [Pick](#pick-your-build-path) |
 | 2 | Build the image and test it | VS Code terminal or CloudShell | [2](#part-2-build-and-test-the-container-15-min) |
-| 3 | Create an **ECR repository** and **push** the image | Console + terminal (or pipeline) | [3](#part-3-store-the-image-in-amazon-ecr-15-min) |
+| 3 | Create an **ECR repository** and **push** the image | Console + terminal | [3](#part-3-store-the-image-in-amazon-ecr-15-min) |
 | 4 | Create an **ECS Fargate cluster** and a **task definition** | Console | [4](#part-4-create-the-cluster-and-task-definition-15-min) |
 | 5 | **Run it as a task** and open it **live** in your browser | Console + browser | [5](#part-5-run-it-on-fargate-and-open-it-live-20-min) |
 | 6 | Make it a **service**: self-healing and scaling | Console | [5.3](#53-make-it-a-service-always-running), [7](#part-7-self-healing-and-scaling-15-min) |
-| 7 | Ship **v2** with a rolling deployment | Terminal + Console (or pipeline) | [8](#part-8-ship-version-2-15-min) |
+| 7 | Ship **v2** with a rolling deployment | Terminal + Console | [8](#part-8-ship-version-2-15-min) |
 | 8 | **Clean up** everything | Console | [10](#part-10-clean-up-10-min-dont-skip-this) |
 
 ---
@@ -39,7 +36,7 @@ Every AWS resource is created in the **AWS Console**. **No access keys** anywher
 
 ```mermaid
 flowchart LR
-    C[💻 Laptop / CloudShell / pipeline<br/>docker build] -->|docker push| R[📦 Amazon ECR<br/>your image]
+    C[💻 Laptop or CloudShell<br/>docker build] -->|docker push| R[📦 Amazon ECR<br/>your image]
     R -->|pull image| S[🚀 ECS service<br/>on Fargate]
     S --> T1[Task 1<br/>your container]
     S --> T2[Task 2<br/>your container]
@@ -93,23 +90,19 @@ from-code-to-cloud/
 
 ## Pick your build path
 
-Everything from **Part 4** onwards is the same for everyone. Only **where you build and push the image** changes.
+Laptop or CloudShell? Follow these 3 steps:
 
-**Quick check** in your laptop terminal (VS Code → **Terminal → New Terminal**):
+**1. Is Docker installed?** In VS Code → **Terminal → New Terminal**, run:
 ```bash
 docker run --rm hello-world
 ```
-- ✅ `Hello from Docker!` → **Path A: your laptop**
-- ❌ Any error, or Docker isn't installed → **Path B: CloudShell**. Don't spend more than 3 minutes fixing Docker.
+✅ You see `Hello from Docker!` → use **your laptop** (the **Path A** steps).
 
-| | **A. Laptop** | **B. CloudShell** | **C. Pipeline** |
-|---|---|---|---|
-| Needs | VS Code, Docker Desktop, AWS CLI 2.32+ | Only a browser | A GitHub account + one-time IAM setup |
-| AWS sign-in | `aws login` | Already signed in | OIDC role (no keys) |
-| Get the code | Download ZIP | `git clone` | Fork the repo |
-| Test before AWS | Browser: `http://localhost:8080` | `curl http://localhost:8080/health` | — |
-| Edit for v2 | VS Code | `nano index.html` | Edit on GitHub ✏️ |
-| Your steps | Parts 2–3, **Path A** blocks | Parts 2–3, **Path B** blocks | [Path C](#path-c-build-push-and-deploy-with-github-actions), then Part 4 |
+**2. Docker not installed?** Install **Docker Desktop**: https://www.docker.com/products/docker-desktop/ → open it → wait for **Engine running** → run the command above again.
+
+**3. Docker won't install or won't start in 3 minutes?** Don't fix it now. Use **AWS CloudShell** (the **Path B** steps). It's a terminal in your browser with Docker already installed. You lose nothing: the workshop is the same from Part 4 on.
+
+> Want GitHub to build and deploy for you instead? That's the optional [pipeline](#path-c-build-push-and-deploy-with-github-actions), at the end.
 
 ---
 
@@ -554,6 +547,8 @@ Try these in order. Give it **3 minutes**, then switch to **Path B** (CloudShell
 ---
 
 ## Path C: Build, push and deploy with GitHub Actions
+
+> **Optional.** Use this after the workshop, or if your instructor shows it as a demo. Paths A and B are all you need today.
 
 A pipeline: GitHub builds the image and pushes it to **your** ECR repository, and (with C.5) deploys it to your ECS service. You need a free **GitHub account**. It takes about 10 minutes to set up once. No access keys: GitHub signs in to AWS with a short-lived token (OIDC) and an IAM role you create.
 
