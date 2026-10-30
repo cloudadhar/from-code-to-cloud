@@ -392,7 +392,7 @@ Do these **in order**:
 
 | Problem | Fix |
 |---|---|
-| `docker: command not found` | Docker Desktop isn't installed, or VS Code was open during the install. Restart VS Code |
+| `docker: command not found` | **Mac:** Docker was opened from the installer disk. Quit it, drag **Docker.app** into **Applications**, eject the Docker disk, open Docker from Applications. **Windows:** restart VS Code (or the laptop) after installing |
 | `Cannot connect to the Docker daemon` / `error during connect` | Docker Desktop isn't running. Open it and wait for **Engine running** |
 | Docker Desktop won't start on Windows | Turn on virtualization in the BIOS and run `wsl --update` in PowerShell (as administrator), then restart. Still stuck? Use **Plan B** below |
 | `aws: command not found` or `Invalid choice: 'login'` | Install or update the AWS CLI to **2.32 or newer**, then restart VS Code |

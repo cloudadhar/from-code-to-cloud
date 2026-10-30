@@ -20,7 +20,7 @@ Please finish this **at home, before** the session. It takes 30–45 minutes, mo
 ## 4. Install Docker Desktop
 1. - [ ] Download **Docker Desktop**: https://www.docker.com/products/docker-desktop/
    - **Windows:** run the installer and keep **Use WSL 2** ticked. Restart when asked.
-   - **Mac:** pick **Apple chip** (M1–M4) or **Intel chip** (Apple menu → **About This Mac** tells you). Drag Docker to Applications.
+   - **Mac:** pick **Apple chip** (M1–M4) or **Intel chip** (Apple menu → **About This Mac** tells you). Drag Docker to **Applications**, eject the Docker disk, then open Docker **from Applications**. (Opening it straight from the installer window gives `docker: command not found` later.)
 2. - [ ] Open **Docker Desktop**, accept the terms (you can skip signing in) and wait for **Engine running** (green, bottom left).
 
 > 🪟 Windows error about **virtualization** or **WSL**? Turn on virtualization in your BIOS (often called *Intel VT-x* or *AMD-V/SVM*), then in **PowerShell as administrator** run `wsl --update` and restart. Still stuck? Send a screenshot to the instructor. You can use CloudShell instead (Plan B in the README).
