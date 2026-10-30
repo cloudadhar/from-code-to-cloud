@@ -451,7 +451,7 @@ git clone https://github.com/cloudadhar/from-code-to-cloud.git
 cd from-code-to-cloud
 ```
 3. Run the same `docker` and `aws ecr` commands from Parts 2–3 there. You can't open `localhost` from CloudShell, so test with `curl http://localhost:8080/health` instead.
-4. For Part 8, edit `index.html` in VS Code, upload it with **Actions → Upload file**, then run `mv ~/index.html ~/from-code-to-cloud/index.html`.
+4. For Part 8, edit the file right in CloudShell: `nano index.html` → change the line under `<!-- Part 8 ... -->` → save with `Ctrl+O`, `Enter` → exit with `Ctrl+X`. Then build and push v2 with the Part 8.2 commands.
 
 ## Plan C: Docker won't work? Build on GitHub Actions
 
