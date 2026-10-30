@@ -53,7 +53,7 @@ From here on, each step says what's different for **💻 laptop** and **☁️ C
 ## Step 1: Get the code
 
 **💻 Laptop:**
-1. Open https://github.com/cloudadhar/from-code-to-cloud → green **Code** button → **Download ZIP** → unzip it.
+1. Open https://github.com/cloudadhar/from-code-to-cloud → green **Code** button → **Download ZIP** → unzip it. (Have Git? `git clone https://github.com/cloudadhar/from-code-to-cloud.git` works too. No need to fork.)
 2. VS Code → **File → Open Folder** → the folder with `README.md` inside.
 3. **Terminal → New Terminal**. Run all commands there.
 
@@ -73,6 +73,7 @@ cd from-code-to-cloud
 ```bash
 docker build --platform linux/amd64 -t from-code-to-cloud:v1 .
 ```
+> `-t from-code-to-cloud:v1` gives the image a **name** and a **tag** (version). `.` means "build from this folder".
 > `--platform linux/amd64` builds for the Intel/AMD servers AWS uses. Mac M1–M4 users: never skip it.
 
 **Run** it:
