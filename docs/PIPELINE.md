@@ -38,7 +38,25 @@ Your fork → **Settings** → **Secrets and variables** → **Actions** → **V
 2. In **your** fork → **Actions** tab → **I understand my workflows, go ahead and enable them**. (Forks have Actions turned off until you do this.)
 
 ## Step 2: Let GitHub sign in to AWS
-**OIDC in one line:** instead of storing an AWS password (access keys) in GitHub, AWS trusts GitHub to say *"this run comes from `YOUR-USERNAME/from-code-to-cloud`, branch `main`"*, and gives that run a 1-hour key for one role. You set this up once: an **identity provider** (trust GitHub) + a **role** (what GitHub may do).
+**OIDC in one line:** instead of storing an AWS password (access keys) in GitHub, AWS trusts GitHub to say *"this run comes from `YOUR-USERNAME/from-code-to-cloud`, branch `main`"*, and gives that run a 1-hour key for one role.
+
+**How AWS and GitHub connect:**
+
+| Side | Piece | Where |
+|---|---|---|
+| **AWS** | **Identity provider** `token.actions.githubusercontent.com`: "AWS trusts tokens signed by GitHub" | IAM → Identity providers (this step, 2.1) |
+| **AWS** | **Role** `github-ecr-push` with a **trust policy**: "only `YOUR-USERNAME/from-code-to-cloud`, branch `main`, may use me" | IAM → Roles (this step, 2.2–2.4) |
+| **GitHub** | `permissions: id-token: write`: "this workflow may ask GitHub for a token" | Already in the [workflow file](../.github/workflows/build-and-push.yml) |
+| **GitHub** | `role-to-assume: ${{ vars.AWS_ROLE_ARN }}`: "use this role" | Already in the workflow; you add the `AWS_ROLE_ARN` **variable** in Step 3 |
+
+**What happens in every run:**
+```
+GitHub run ──1. "give me a token"──▶ GitHub OIDC
+GitHub run ──2. token + role ARN──▶ AWS STS
+AWS STS    ──3. checks the identity provider + the role's trust policy (your repo? branch main?)
+AWS STS    ──4. 1-hour credentials──▶ GitHub run ──▶ docker push to ECR, deploy to ECS
+```
+You only create the two **AWS** pieces below. The **GitHub** pieces are already in the workflow file.
 
 1. **IAM** → **Identity providers** → **Add provider** (already in the list? skip)
    - **Provider type:** OpenID Connect
