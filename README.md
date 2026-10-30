@@ -125,6 +125,41 @@ docker run --rm hello-world
 
 > 🔐 The task execution role is used by **ECS**, before your app starts. The task role is used by **your code**, while it runs. Our app needs only the first.
 
+**No "Create new role" option in Part 4.2, or it fails?** Create the task execution role yourself (2 minutes):
+1. **IAM** → **Roles** → **Create role**
+2. **Trusted entity type:** AWS service · **Service or use case:** **Elastic Container Service** → **Elastic Container Service Task** → **Next**
+3. Search and tick **`AmazonECSTaskExecutionRolePolicy`** → **Next**
+4. **Role name:** `ecsTaskExecutionRole` → **Create role**
+5. Back in Part 4.2, choose it under **Task execution role** (click the refresh icon if it isn't listed yet).
+
+The trust policy IAM writes for you lets only ECS tasks use the role:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"Service": "ecs-tasks.amazonaws.com"},
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+**Where each piece is in this guide**
+
+| What | Steps |
+|---|---|
+| Your IAM user with `AdministratorAccess` | [docs/PREREQUISITES.md](docs/PREREQUISITES.md), step 1 |
+| ECR repository | Part 3.1 |
+| ECS cluster | Part 4.1 |
+| Task definition + task execution role | Part 4.2 (or the manual steps above) |
+| Security group (TCP 8080) | Part 5.1 |
+| GitHub OIDC identity provider | Path C → C.2 step 1 |
+| Pipeline role: trust policy, `AmazonEC2ContainerRegistryPowerUser`, inline policy | Path C → C.2 steps 2–4 |
+| GitHub variables | Path C → C.3 (ECR) and C.5 (ECS) |
+| Deleting all of it | Part 10, and the end of Path C |
+
 ---
 
 ## Part 1: Before the workshop (30–45 min, at home)
