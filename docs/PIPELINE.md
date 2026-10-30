@@ -38,6 +38,8 @@ Your fork → **Settings** → **Secrets and variables** → **Actions** → **V
 2. In **your** fork → **Actions** tab → **I understand my workflows, go ahead and enable them**. (Forks have Actions turned off until you do this.)
 
 ## Step 2: Let GitHub sign in to AWS
+**OIDC in one line:** instead of storing an AWS password (access keys) in GitHub, AWS trusts GitHub to say *"this run comes from `YOUR-USERNAME/from-code-to-cloud`, branch `main`"*, and gives that run a 1-hour key for one role. You set this up once: an **identity provider** (trust GitHub) + a **role** (what GitHub may do).
+
 1. **IAM** → **Identity providers** → **Add provider** (already in the list? skip)
    - **Provider type:** OpenID Connect
    - **Provider URL:** `https://token.actions.githubusercontent.com`
@@ -75,6 +77,28 @@ Your fork → **Settings** → **Secrets and variables** → **Actions** → **V
   ]
 }
 ```
+4. Check the role's **Trust relationships** tab. This is the OIDC part: it says *which* GitHub repo may use the role. It should look like this, with your username:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"Federated": "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"},
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"},
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": [
+            "repo:YOUR-USERNAME/from-code-to-cloud:ref:refs/heads/main"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+   If your first run fails with `Not authorized to perform sts:AssumeRoleWithWebIdentity`, your GitHub account sends an **ID-based** name. Open `https://api.github.com/repos/YOUR-USERNAME/from-code-to-cloud`, note `owner.id` and `id`, and add a second line to the `sub` list: `"repo:YOUR-USERNAME@OWNER-ID/from-code-to-cloud@REPO-ID:ref:refs/heads/main"` → **Update policy**.
 
 ## Step 3: Create ECR and add the first 3 variables
 1. Create the ECR repository: [README Step 3.1](../README.md#31-create-the-repository-console).
@@ -120,7 +144,7 @@ You can also run it by hand: **Run workflow** → any tag (e.g. `v2`) → **depl
 | `Add these in Settings → … Variables` | A variable is missing or misspelled. Check the names exactly (Step 3 and Step 5) |
 | Variables are under **Secrets** | Move them to the **Variables** tab |
 | No **Run workflow** button | Actions aren't turned on in your fork (Step 1) |
-| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The role's trust policy doesn't match your fork. IAM → `github-ecr-push` → **Trust relationships**: the `sub` must be `repo:YOUR-USERNAME/from-code-to-cloud:ref:refs/heads/main`. Some accounts send an ID-based form instead (`repo:YOUR-USERNAME@OWNER-ID/from-code-to-cloud@REPO-ID:ref:refs/heads/main`): get the IDs from `https://api.github.com/repos/YOUR-USERNAME/from-code-to-cloud` (`owner.id` and `id`) and add that line too |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The trust policy doesn't match your fork: check the username, and add the ID-based line (Step 2.4) |
 | `repository ... does not exist` | Create the ECR repo in the same region as `AWS_REGION` |
 | `429 Too Many Requests` | The role is missing the inline policy (Step 2.3) |
 | `AccessDenied` on `ecs:...` or `iam:PassRole` | The role is missing the inline policy (Step 2.3) |
