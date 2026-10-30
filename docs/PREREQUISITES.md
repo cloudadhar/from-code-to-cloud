@@ -57,6 +57,13 @@ Please finish this **at home, before** the session. It takes 30–45 minutes, mo
    aws sts get-caller-identity
    ```
    ✅ You see your 12-digit **Account** number, and an **Arn** ending in `user/<your-name>` (not `root`).
+4. - [ ] `aws login` says *Profile 'default' is already configured with Access Key credentials*, or you see *security token is invalid*? You have old access keys saved. Use a new profile instead:
+   ```bash
+   aws login --profile workshop --region ap-south-1
+   export AWS_PROFILE=workshop
+   aws sts get-caller-identity
+   ```
+   On Windows PowerShell, use `$env:AWS_PROFILE="workshop"` instead of the `export` line. Run it again in every new terminal.
 
 ## 8. ECS is ready
 - [ ] Open **Elastic Container Service (ECS)** in the Console and check that the page loads without an error.

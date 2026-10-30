@@ -200,12 +200,14 @@ aws sts get-caller-identity
 ### 3.3 Push the image (VS Code terminal)
 In the Console, open your repository and **copy the URI** next to its name. It looks like `123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud`.
 
-In the commands below, **replace `123456789012` with your own account ID** (the same on every line):
-```bash
-# 1. Log Docker in to your private ECR registry
-aws ecr get-login-password | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-south-1.amazonaws.com
+In the commands below, **replace `123456789012` with your own account ID** (the same on every line).
 
-# 2. Give the image its ECR name, then push it
+**1. Log Docker in to your private ECR registry:**
+```bash
+aws ecr get-login-password | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-south-1.amazonaws.com
+```
+**2. Give the image its ECR name, then push it:**
+```bash
 docker tag from-code-to-cloud:v1 123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v1
 docker push 123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v1
 ```
@@ -398,6 +400,9 @@ Do these **in order**:
 | Docker Desktop won't start | See **Docker Desktop won't start?** below. Still stuck after 3 minutes? Use **Plan B** or **Plan C** |
 | `aws: command not found` or `Invalid choice: 'login'` | Install or update the AWS CLI to **2.32 or newer**, then restart VS Code |
 | `Unable to locate credentials` | Run `aws login` again (it lasts up to 12 hours) |
+| `aws login`: *Profile 'default' is already configured with Access Key credentials* | Old access keys are saved on your laptop. Sign in under a new profile instead: `aws login --profile workshop --region ap-south-1`, then `export AWS_PROFILE=workshop` (Windows PowerShell: `$env:AWS_PROFILE="workshop"`). Run the `export` again in every new terminal |
+| `The security token included in the request is invalid` | Same cause: old access keys. Use the `--profile workshop` fix above |
+| `zsh: command not found: #` (Mac) | You pasted a comment line. Paste only the command lines |
 | `no basic auth credentials` on `docker push` | Run the `aws ecr get-login-password ... docker login` line again |
 | `repository ... does not exist` on push | The repo name, account ID or region doesn't match. It must be `from-code-to-cloud` in **ap-south-1** |
 | `429 Too Many Requests` / `toomanyrequests` when building | Too many anonymous downloads of the base image from your network. Sign Docker in to ECR Public, then build again: `aws ecr-public get-login-password --region us-east-1 \| docker login --username AWS --password-stdin public.ecr.aws` |
