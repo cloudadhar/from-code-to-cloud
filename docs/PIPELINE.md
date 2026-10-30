@@ -129,8 +129,8 @@ You only create the two **AWS** pieces below. The **GitHub** pieces are already 
 | `ECR_REPOSITORY` | `from-code-to-cloud` | ECR → **Repositories** → **Repository name** (only the name, not the full URI) |
 
 ## Step 4: First run: build and push v1
-1. Your fork → **Actions** → **Build, push and deploy** → **Run workflow** → **tag:** `v1` → **untick deploy** (ECS doesn't exist yet) → **Run workflow**.
-2. Wait about 2 minutes for the green ✅. Open the run: the summary shows your **Image URI** (ends in `:v1`). Copy it.
+1. Your fork → **Actions** → **Build, push and deploy** → **Run workflow** → leave **tag** empty (it picks `v1`, `v2`… automatically) → **untick deploy** (ECS doesn't exist yet) → **Run workflow**.
+2. Wait about 2 minutes for the green ✅. Open the run: the summary shows your **Image URI** (ends in `:v1` or similar). Copy it.
 
 ## Step 5: Create ECS and add the last 4 variables
 1. In the Console, follow [README Steps 4–7](../README.md#step-4-create-an-ecs-cluster): cluster → task definition (paste the Image URI from Step 4) → run a task → **service**. Check the app opens on `http://<public-ip>:8080`.
@@ -149,9 +149,11 @@ You only create the two **AWS** pieces below. The **GitHub** pieces are already 
 1. In your fork, open `index.html` → ✏️ → change the line under `<!-- Part 8 ... -->` to your own message → **Commit changes** (to `main`).
 2. **Actions** tab: a run starts by itself → **build-and-push** → **deploy** (about 4–6 minutes; it waits until the new task is healthy).
 3. ECS → your service → **Deployments** tab: the rolling update.
-4. Open the **new** task's Public IP on `:8080`. ✅ Your new message, version `git-xxxxxxx`. No command typed. 🎉
+4. Open the **new** task's Public IP on `:8080`. ✅ Your new message, with a **new version number** (e.g. `v3`). No command typed. 🎉
 
-You can also run it by hand: **Run workflow** → any tag (e.g. `v2`) → **deploy** ticked.
+**Every change gets its own version automatically:** each run tags the image `v` + the run number (`v3`, `v4`, `v5`…), so ECR keeps every version and you can roll back to any of them.
+
+You can also run it by hand: **Run workflow** → leave **tag** empty (or type your own, e.g. `v2-demo`) → **deploy** ticked.
 
 ---
 

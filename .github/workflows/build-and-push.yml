@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag (v1 first, v2 in Step 8)"
-        required: true
-        default: v1
+        description: "Image tag. Leave empty for an automatic one (v + run number, e.g. v7)"
+        required: false
+        default: ""
       deploy:
         description: "Also deploy to ECS (needs the ECS_* variables)"
         type: boolean
@@ -56,9 +56,10 @@ jobs:
             echo "::error::Add these in Settings → Secrets and variables → Actions → Variables:$missing"
             exit 1
           fi
-          # A push has no tag input: tag the image with the commit, e.g. git-1a2b3c4
+          # No tag given (every push, or an empty box): tag it automatically with
+          # v + this workflow's run number, which GitHub counts up: v5, v6, v7...
           if [ -z "$TAG" ]; then
-            TAG="git-${GITHUB_SHA::7}"
+            TAG="v${GITHUB_RUN_NUMBER}"
             echo "TAG=$TAG" >> "$GITHUB_ENV"
           fi
           if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9._-]{1,128}$'; then
