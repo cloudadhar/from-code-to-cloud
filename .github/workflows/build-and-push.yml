@@ -56,6 +56,17 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # GitHub runners share IP addresses, so anonymous pulls of the base image from
+      # ECR Public can hit "429 Too Many Requests". Signed-in pulls get a higher limit.
+      # ECR Public sign-in only works in us-east-1.
+      - name: Log Docker in to Amazon ECR Public (for the base image)
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+        env:
+          AWS_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-1
+
       - name: Build the image (same as Part 2.4)
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}

@@ -400,6 +400,7 @@ Do these **in order**:
 | `Unable to locate credentials` | Run `aws login` again (it lasts up to 12 hours) |
 | `no basic auth credentials` on `docker push` | Run the `aws ecr get-login-password ... docker login` line again |
 | `repository ... does not exist` on push | The repo name, account ID or region doesn't match. It must be `from-code-to-cloud` in **ap-south-1** |
+| `429 Too Many Requests` / `toomanyrequests` when building | Too many anonymous downloads of the base image from your network. Sign Docker in to ECR Public, then build again: `aws ecr-public get-login-password --region us-east-1 \| docker login --username AWS --password-stdin public.ecr.aws` |
 | Port `8080` already in use on your laptop | Run `docker ps`, then `docker stop` and `docker rm` the old container |
 | Task stops with `exec format error` | The image was built for ARM (Apple chip). Rebuild with `--platform linux/amd64` and push again |
 | Task stops with `CannotPullContainerError` | **Public IP** was off, or the Image URI is wrong. Check the URI ends in `:v1`, and recreate the service with Public IP **Turned on** |
