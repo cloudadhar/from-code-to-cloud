@@ -23,7 +23,7 @@ Please finish this **at home, before** the session. It takes 30–45 minutes, mo
    - **Mac:** pick **Apple chip** (M1–M4) or **Intel chip** (Apple menu → **About This Mac** tells you). Drag Docker to **Applications**, eject the Docker disk, then open Docker **from Applications**. (Opening it straight from the installer window gives `docker: command not found` later.)
 2. - [ ] Open **Docker Desktop**, accept the terms (you can skip signing in) and wait for **Engine running** (green, bottom left).
 
-> 🪟 Windows error about **virtualization** or **WSL**? Turn on virtualization in your BIOS (often called *Intel VT-x* or *AMD-V/SVM*), then in **PowerShell as administrator** run `wsl --update` and restart. Still stuck? Send a screenshot to the instructor. You can use CloudShell instead: **Path B** in the README, nothing to install.
+> 🪟 Windows error about **virtualization** or **WSL**? Turn on virtualization in your BIOS (often called *Intel VT-x* or *AMD-V/SVM*), then in **PowerShell as administrator** run `wsl --update` and restart. Still stuck? Send a screenshot to the instructor. You can use **AWS CloudShell** instead (README Step 0), nothing to install.
 
 ## 5. Install the AWS CLI (version 2.32 or newer)
 1. - [ ] Follow the installer for your OS: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -69,6 +69,6 @@ Please finish this **at home, before** the session. It takes 30–45 minutes, mo
 - [ ] Open **Elastic Container Service (ECS)** in the Console and check that the page loads without an error.
 
 ## Cost
-Less than **US$0.10** if you clean up at the end (Part 10 of the README).
+Less than **US$0.10** if you clean up at the end (README Step 9).
 
 If any step fails, message the instructor **before** the workshop with a screenshot.

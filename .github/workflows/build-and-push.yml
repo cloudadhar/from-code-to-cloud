@@ -1,6 +1,6 @@
-# Path C (pipeline): build the image on GitHub, push it to your Amazon ECR repository,
+# Optional pipeline: build the image on GitHub, push it to your Amazon ECR repository,
 # then (optionally) deploy it to your ECS service.
-# Setup steps: README → "Path C: Build, push and deploy with GitHub Actions" (C.1–C.5).
+# Setup steps: docs/PIPELINE.md (C.1–C.5).
 #
 # Runs when you click "Run workflow" (Actions tab), and on every push to main that
 # changes app.py, index.html or the Dockerfile. Without the repository variables it skips.
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag (v1 first, v2 in Part 8)"
+        description: "Image tag (v1 first, v2 in Step 8)"
         required: true
         default: v1
       deploy:
@@ -90,14 +90,14 @@ jobs:
           AWS_REGION: us-east-1
           AWS_DEFAULT_REGION: us-east-1
 
-      - name: Build the image (same as Part 2.4)
+      - name: Build the image (same as README Step 2)
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           docker build --platform linux/amd64 --build-arg APP_VERSION="$TAG" \
             -t "$REGISTRY/$ECR_REPOSITORY:$TAG" .
 
-      - name: Push the image to ECR (same as Part 3.3)
+      - name: Push the image to ECR (same as README Step 3)
         id: push
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -137,7 +137,7 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Start from the latest revision you made in the Console (Part 4.2), so CPU, memory,
+      # Start from the latest revision you made in the Console (README Step 5), so CPU, memory,
       # port, logs and roles stay exactly as you set them. Only the image changes.
       - name: Download the current task definition
         run: |
@@ -152,7 +152,7 @@ jobs:
           container-name: ${{ vars.ECS_CONTAINER_NAME }}
           image: ${{ needs.build-and-push.outputs.image }}
 
-      # Same as Part 8.3: new revision → update service → rolling deployment.
+      # Same as README Step 8: new revision → update service → rolling deployment.
       - name: Deploy to ECS (rolling deployment)
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
