@@ -10,9 +10,12 @@ You'll take a small web app, **package it as a container**, **store it in Amazon
 - 📦 **Amazon ECR** is your private image registry on AWS
 - 🚀 **Amazon ECS + AWS Fargate** runs the container, so you never create or patch a server
 - 📜 **Amazon CloudWatch Logs** shows what your container prints
-- 💻 **Your laptop** builds the image with **Docker Desktop** and pushes it with the **AWS CLI**, all from the **VS Code** terminal
+- 🛠️ **Three ways to build and push the image.** Pick the one that works for you ([Pick your build path](#pick-your-build-path)):
+  - **A. Your laptop:** Docker Desktop + AWS CLI, in the VS Code terminal
+  - **B. AWS CloudShell:** a terminal in the Console with Docker built in. Nothing to install
+  - **C. A pipeline:** GitHub Actions builds, pushes and deploys for you
 
-Every AWS resource is created in the **AWS Console**. The commands you type run in VS Code on your laptop. No GitHub, and **no access keys**: `aws login` signs the AWS CLI in with your Console sign-in.
+Every AWS resource is created in the **AWS Console**. **No access keys** anywhere: the laptop uses `aws login`, CloudShell uses your Console sign-in, and the pipeline uses OIDC.
 
 > Built by **[CloudAdhar](https://youtube.com/@cloudadhar)**, Building Cloud Futures
 
@@ -21,13 +24,13 @@ Every AWS resource is created in the **AWS Console**. The commands you type run 
 ## Your path in 8 steps
 | # | Step | Where | Part |
 |---|---|---|---|
-| 1 | Install VS Code, Docker Desktop, AWS CLI | Laptop | [1](#part-1-before-the-workshop-3045-min-at-home) |
-| 2 | Build the image and test it on `localhost:8080` | VS Code terminal | [2](#part-2-build-and-test-the-container-on-your-laptop-15-min) |
-| 3 | Create an **ECR repository** and **push** the image | Console + VS Code terminal | [3](#part-3-store-the-image-in-amazon-ecr-15-min) |
+| 1 | Get ready and **pick your build path**: laptop, CloudShell or pipeline | Laptop / Console | [1](#part-1-before-the-workshop-3045-min-at-home), [Pick](#pick-your-build-path) |
+| 2 | Build the image and test it | VS Code terminal or CloudShell | [2](#part-2-build-and-test-the-container-15-min) |
+| 3 | Create an **ECR repository** and **push** the image | Console + terminal (or pipeline) | [3](#part-3-store-the-image-in-amazon-ecr-15-min) |
 | 4 | Create an **ECS Fargate cluster** and a **task definition** | Console | [4](#part-4-create-the-cluster-and-task-definition-15-min) |
 | 5 | **Run it as a task** and open it **live** in your browser | Console + browser | [5](#part-5-run-it-on-fargate-and-open-it-live-20-min) |
 | 6 | Make it a **service**: self-healing and scaling | Console | [5.3](#53-make-it-a-service-always-running), [7](#part-7-self-healing-and-scaling-15-min) |
-| 7 | Ship **v2** with a rolling deployment | VS Code + Console | [8](#part-8-ship-version-2-15-min) |
+| 7 | Ship **v2** with a rolling deployment | Terminal + Console (or pipeline) | [8](#part-8-ship-version-2-15-min) |
 | 8 | **Clean up** everything | Console | [10](#part-10-clean-up-10-min-dont-skip-this) |
 
 ---
@@ -36,7 +39,7 @@ Every AWS resource is created in the **AWS Console**. The commands you type run 
 
 ```mermaid
 flowchart LR
-    C[💻 Your laptop<br/>docker build] -->|docker push| R[📦 Amazon ECR<br/>your image]
+    C[💻 Laptop / CloudShell / pipeline<br/>docker build] -->|docker push| R[📦 Amazon ECR<br/>your image]
     R -->|pull image| S[🚀 ECS service<br/>on Fargate]
     S --> T1[Task 1<br/>your container]
     S --> T2[Task 2<br/>your container]
@@ -81,18 +84,54 @@ from-code-to-cloud/
 ├── index.html        <- the page you'll see (you'll edit it in Part 8)
 ├── Dockerfile        <- the recipe to build the image
 ├── .dockerignore     <- files kept out of the image
-├── .github/workflows/build-and-push.yml  <- Plan C: build, push and deploy on GitHub
+├── .github/workflows/build-and-push.yml  <- Path C: build, push and deploy on GitHub
 └── docs/
     └── PREREQUISITES.md
 ```
 
 ---
 
+## Pick your build path
+
+Everything from **Part 4** onwards is the same for everyone. Only **where you build and push the image** changes.
+
+**Quick check** in your laptop terminal (VS Code → **Terminal → New Terminal**):
+```bash
+docker run --rm hello-world
+```
+- ✅ `Hello from Docker!` → **Path A: your laptop**
+- ❌ Any error, or Docker isn't installed → **Path B: CloudShell**. Don't spend more than 3 minutes fixing Docker.
+
+| | **A. Laptop** | **B. CloudShell** | **C. Pipeline** |
+|---|---|---|---|
+| Needs | VS Code, Docker Desktop, AWS CLI 2.32+ | Only a browser | A GitHub account + one-time IAM setup |
+| AWS sign-in | `aws login` | Already signed in | OIDC role (no keys) |
+| Get the code | Download ZIP | `git clone` | Fork the repo |
+| Test before AWS | Browser: `http://localhost:8080` | `curl http://localhost:8080/health` | — |
+| Edit for v2 | VS Code | `nano index.html` | Edit on GitHub ✏️ |
+| Your steps | Parts 2–3, **Path A** blocks | Parts 2–3, **Path B** blocks | [Path C](#path-c-build-push-and-deploy-with-github-actions), then Part 4 |
+
+---
+
+## IAM roles and policies used in this workshop
+
+| Who or what | Identity / role | Permissions | Where you set it up |
+|---|---|---|---|
+| **You** (Console, laptop CLI, CloudShell) | IAM user or IAM Identity Center user. **Not root** | `AdministratorAccess` for the workshop | Part 1.2. `aws login` and CloudShell reuse this sign-in |
+| **ECS, to start your task** | **Task execution role** (e.g. `ecsTaskExecutionRole`), trusted by `ecs-tasks.amazonaws.com` | AWS managed `AmazonECSTaskExecutionRolePolicy`: pull the image from ECR, write logs to CloudWatch | Part 4.2 → **Create new role** (or pick an existing task execution role) |
+| **Your app, while running** | Task role | None: the app doesn't call any AWS API | Part 4.2 → leave empty |
+| **The pipeline** (Path C only) | IAM role trusted by GitHub's OIDC provider, e.g. `github-ecr-push` | `AmazonEC2ContainerRegistryPowerUser` + a small inline policy for ECR Public sign-in and ECS deploy | [Path C → C.2](#c2-let-github-sign-in-to-aws-console-one-time) |
+| **Who can reach the app** | Security group `cloudadhar-web-sg` | Inbound **TCP 8080** from Anywhere | Part 5.1 |
+
+> 🔐 The task execution role is used by **ECS**, before your app starts. The task role is used by **your code**, while it runs. Our app needs only the first.
+
+---
+
 ## Part 1: Before the workshop (30–45 min, at home)
 
-Full checklist with screenshots-level detail: **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)**. Do it **at home**: Docker Desktop is a large download.
+Full checklist: **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)**. Do it **at home**: Docker Desktop is a large download. If Docker won't install or start, don't worry: you'll use **Path B (CloudShell)**, which needs nothing installed.
 
-### 1.1 Install these on your laptop
+### 1.1 Install these on your laptop (Path A)
 | Tool | Why | Get it | Check it (in a terminal) |
 |---|---|---|---|
 | **VS Code** | Read this guide, edit the code, run commands | [code.visualstudio.com](https://code.visualstudio.com) | Opens ✅ |
@@ -123,18 +162,28 @@ Then:
 
 ---
 
-## Part 2: Build and test the container on your laptop (15 min)
+## Part 2: Build and test the container (15 min)
 
-### 2.1 Start Docker
-1. Open **Docker Desktop** and wait until it says **Engine running** (green, bottom left).
-2. In the VS Code terminal:
+### 2.1 Open your terminal and get the code
+**Path A (laptop):**
+1. Open **Docker Desktop** and wait for **Engine running** (green, bottom left).
+2. In VS Code (the project folder from Part 1.3): **Terminal → New Terminal**, then:
 ```bash
 docker --version
 ```
-✅ You see a version number.
 
-### 2.3 Read the Dockerfile
-In **VS Code**, open `Dockerfile`. Every instruction has a numbered comment explaining it:
+**Path B (CloudShell):**
+1. Console, region **ap-south-1** → click the **CloudShell icon `>_`** in the top bar. Wait about 30 seconds.
+2. Get the code (Git and Docker are already installed):
+```bash
+git clone https://github.com/cloudadhar/from-code-to-cloud.git
+cd from-code-to-cloud
+docker --version
+```
+✅ You see a Docker version.
+
+### 2.2 Read the Dockerfile
+**Path A:** open `Dockerfile` in VS Code. **Path B:** run `cat Dockerfile`. Every instruction has a numbered comment explaining it:
 
 | # | Instruction | What it does |
 |---|---|---|
@@ -152,20 +201,27 @@ In **VS Code**, open `Dockerfile`. Every instruction has a numbered comment expl
 
 That's all a container image is: a base + your files + how to start them.
 
-### 2.4 Build the image
+### 2.3 Build the image (Path A and B)
 ```bash
 docker build --platform linux/amd64 -t from-code-to-cloud:v1 .
 docker images from-code-to-cloud
 ```
 ✅ You see `from-code-to-cloud   v1` with a size of about 60 MB.
 
-> 💡 `--platform linux/amd64` builds for the **X86_64** CPUs our ECS task uses. Without it, a Mac with an Apple chip (M1–M4) builds an ARM image, and the ECS task fails with `exec format error`.
+> 💡 `--platform linux/amd64` builds for the **X86_64** CPUs our ECS task uses. Without it, a Mac with an Apple chip (M1–M4) builds an ARM image, and the ECS task fails with `exec format error`. CloudShell is already X86_64, and the flag does no harm there.
 
-### 2.5 Run it and open it in your browser
+### 2.4 Run it and test it
 ```bash
 docker run -d --name web -p 8080:8080 from-code-to-cloud:v1
 ```
-Open **http://localhost:8080** in your browser. ✅ You see the welcome page with fireworks, **Application version: v1** and **Running on: Local Docker container**. Try **http://localhost:8080/health** too.
+**Path A:** open **http://localhost:8080** in your browser. ✅ The welcome page with fireworks, **Application version: v1** and **Running on: Local Docker container**.
+
+**Path B:** CloudShell can't open a browser tab on `localhost`, so ask the app with `curl`:
+```bash
+curl http://localhost:8080/health
+curl -s http://localhost:8080 | grep -E "version|Running on"
+```
+✅ `{"status": "healthy"}`, `Application version: v1` and `Running on: Local Docker container`.
 
 Stop and remove it:
 ```bash
@@ -173,18 +229,27 @@ docker stop web
 docker rm web
 ```
 
-> ℹ️ This is your app running in a container **on your laptop**. Next, you'll run the exact same image on AWS.
+> ℹ️ This is your app running in a container **on your machine**. Next, you'll run the exact same image on AWS.
 
 ---
 
 ## Part 3: Store the image in Amazon ECR (15 min)
 
 ### 3.1 Create the repository (Console)
-1. **Elastic Container Registry (ECR)** → **Private registry** → **Repositories** → **Create repository**
-2. **Repository name:** `from-code-to-cloud`
-3. Keep the other settings as they are → **Create**
+1. Check the region (top right): **Asia Pacific (Mumbai) ap-south-1**.
+2. Search **ECR** → **Elastic Container Registry** → left menu **Private registry → Repositories** → **Create repository**.
+3. **General settings:**
+   - **Repository name:** `from-code-to-cloud` (lowercase; the account and region part in front is filled in for you)
+   - **Image tag mutability:** keep **Mutable** (you can push `v1` again if you need to)
+4. **Encryption settings:** keep **AES-256** (the default)
+5. **Create**.
+6. ✅ The repository appears in the list with its **URI**, like `123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud`. It's empty until you push.
 
-### 3.2 Sign the AWS CLI in (VS Code terminal)
+> 💡 **Private** repository, not Public: only your AWS account (and roles you allow, like the ECS task execution role) can pull from it.
+
+### 3.2 Sign the AWS CLI in (Path A only)
+**Path B:** skip this. CloudShell is already signed in as you.
+
 ```bash
 aws configure set region ap-south-1
 aws login
@@ -197,7 +262,7 @@ aws sts get-caller-identity
 
 > 🔐 No access keys: `aws login` gives the CLI short-term credentials from your Console sign-in, refreshed automatically for up to 12 hours.
 
-### 3.3 Push the image (VS Code terminal)
+### 3.3 Push the image (Path A: VS Code terminal · Path B: CloudShell)
 In the Console, open your repository and **copy the URI** next to its name. It looks like `123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud`.
 
 In the commands below, **replace `123456789012` with your own account ID** (the same on every line).
@@ -213,10 +278,12 @@ docker push 123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v1
 ```
 ✅ `Login Succeeded`, then the push finishes with a `digest: sha256:...` line.
 
-> ℹ️ The Console's **View push commands** button shows the same steps for macOS/Linux and Windows. Use the commands above: they include `--platform` in the build (Part 2.4).
+> ℹ️ The Console's **View push commands** button shows the same steps. Use the commands above: our build already added `--platform` (Part 2.3), and we tag `v1` instead of `latest`, so versions stay easy to tell apart.
+>
+> **Path C:** do Part 3.1, then follow [Path C](#path-c-build-push-and-deploy-with-github-actions) to build and push, and come back to 3.4.
 
 ### 3.4 Check it (Console)
-Refresh the repository page. ✅ You see an image with tag **v1**. Click it and **copy the Image URI** (it ends in `:v1`). You'll paste it in Part 4.
+Refresh the repository page. ✅ You see an image with tag **v1**. Click it and **copy the Image URI**. It looks like `123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v1`. You'll paste it in Part 4.
 
 ---
 
@@ -226,19 +293,21 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 > ⚠️ If ECS opens a page called **Let's set up your app** (Express mode, with an *Infrastructure role*), click **Cancel**. We build each piece ourselves so you learn what it is. Use **Clusters** in the left menu.
 
 1. **Elastic Container Service (ECS)** → **Clusters** (left menu) → **Create cluster**
-2. **Cluster name:** `cloudadhar-cluster`
-3. **Infrastructure:** keep **AWS Fargate (serverless)** only
+2. **Cluster name:** the Console fills in a random name (like `infinite-shark-if9ztf`). **Replace it** with `cloudadhar-cluster`
+3. **Infrastructure:** keep **Fargate only**. Leave Gateways, Service Connect, Monitoring, Encryption and Tags empty
 4. **Create** (takes about 1 minute)
 
 ### 4.2 Create the task definition (the recipe)
 1. **ECS** → **Task definitions** → **Create new task definition** → **Create new task definition**
 2. **Task definition family:** `from-code-to-cloud`
 3. **Launch type:** **AWS Fargate** · **Operating system/Architecture:** **Linux/X86_64**
-4. **Task size:** **CPU** `.25 vCPU` · **Memory** `.5 GB`
+4. **Task size:** **CPU** `.25 vCPU` · **Memory** `.5 GB` (the Console may default to .5 vCPU / 1 GB: change it)
 5. **Task role:** leave empty (our app doesn't call AWS)
-6. **Task execution role:** **Create new role** (ECS uses this role to pull your image and send logs)
+6. **Task execution role:** **Create new role**, or pick an existing task execution role (e.g. `ecsTaskExecutionRole`). ECS uses it to pull your image and send logs
 7. **Container – 1:**
-   - **Name:** `web` · **Image URI:** *(paste from 3.4, ending in `:v1`)* · **Essential container:** Yes
+   - **Name:** `web` (the Console may fill in `Main`: change it)
+   - **Image URI:** paste the URI from 3.4, ending in `:v1`. *(**Browse ECR images** fills in an `@sha256:...` digest instead. That works too, but the tag is easier to read.)*
+   - **Essential container:** Yes
    - **Port mappings:** **Container port** `8080` · **Protocol** TCP · **App protocol** HTTP
    - **Log collection:** keep **Use log collection** ticked (Amazon CloudWatch)
 8. **Create**
@@ -320,17 +389,19 @@ Set **Desired tasks** back to `1` when you're done, to save cost.
 
 ## Part 8: Ship version 2 (15 min)
 
-### 8.1 Change the app (VS Code)
-1. In **VS Code**, open `index.html`.
-2. Find the line under `<!-- Part 8 ... -->` and change the text to your own message, e.g. `Deployed by Priya on ECS Fargate 🚀`. Save with **Ctrl+S** (Mac: **Cmd+S**).
+### 8.1 Change the app
+Find the line under `<!-- Part 8 ... -->` in `index.html` and change the text to your own message, e.g. `Deployed by Priya on ECS Fargate 🚀`.
+- **Path A:** in VS Code, then save with **Ctrl+S** (Mac: **Cmd+S**).
+- **Path B:** `nano index.html` → edit → save with `Ctrl+O`, `Enter` → exit with `Ctrl+X`.
+- **Path C:** on GitHub, open `index.html` in your fork → pencil ✏️ → edit → **Commit changes**. Then run the workflow with tag `v2` (or, with CD turned on, it deploys by itself) and skip to 8.3 step 5.
 
-### 8.2 Build, test and push v2 (VS Code terminal)
+### 8.2 Build, test and push v2 (Path A and B)
 Replace `123456789012` with your account ID again:
 ```bash
 docker build --platform linux/amd64 --build-arg APP_VERSION=v2 -t 123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v2 .
 docker run -d --name web2 -p 8080:8080 123456789012.dkr.ecr.ap-south-1.amazonaws.com/from-code-to-cloud:v2
 ```
-Open **http://localhost:8080**. ✅ **Application version: v2** with your message. Then stop it and push:
+**Path A:** open **http://localhost:8080**. **Path B:** `curl -s http://localhost:8080 | grep -E "version|Deployed"`. ✅ **Application version: v2** with your message. Then stop it and push:
 ```bash
 docker stop web2
 docker rm web2
@@ -388,7 +459,7 @@ Do these **in order**:
 1. **Application Load Balancer:** create the service with **Load balancing** → **Application Load Balancer**, so the app has one fixed URL. *(An ALB costs about US$0.02/hour, so delete it afterwards.)*
 2. **Auto scaling:** in the service, add **Service auto scaling** with a target of 50% CPU, min 1, max 3 tasks.
 3. **Health check:** in the task definition, add a container health check: `CMD-SHELL, python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')" || exit 1`.
-4. **CI/CD:** turn on automatic deploys with the workflow in **Plan C** (C.5): every commit to `main` builds, pushes and deploys.
+4. **CI/CD:** turn on automatic deploys with the workflow in **Path C** (C.5): every commit to `main` builds, pushes and deploys.
 5. **Try a different image:** create a new task definition with the public image `public.ecr.aws/nginx/nginx:latest` on port 80.
 
 ---
@@ -399,7 +470,7 @@ Do these **in order**:
 |---|---|
 | `docker: command not found` | **Mac:** Docker was opened from the installer disk. Quit it, drag **Docker.app** into **Applications**, eject the Docker disk, open Docker from Applications. **Windows:** restart VS Code (or the laptop) after installing |
 | `Cannot connect to the Docker daemon` / `error during connect` | Docker Desktop isn't running. Open it and wait for **Engine running** |
-| Docker Desktop won't start | See **Docker Desktop won't start?** below. Still stuck after 3 minutes? Use **Plan B** or **Plan C** |
+| Docker Desktop won't start | See **Docker Desktop won't start?** below. Still stuck after 3 minutes? Switch to **Path B (CloudShell)** |
 | `aws: command not found` or `Invalid choice: 'login'` | Install or update the AWS CLI to **2.32 or newer**, then restart VS Code |
 | `Unable to locate credentials` | Run `aws login` again (it lasts up to 12 hours) |
 | `aws login`: *Profile 'default' is already configured with Access Key credentials* | Old access keys are saved on your laptop. Sign in under a new profile instead: `aws login --profile workshop --region ap-south-1`, then `export AWS_PROFILE=workshop` (Windows PowerShell: `$env:AWS_PROFILE="workshop"`). Run the `export` again in every new terminal |
@@ -422,7 +493,7 @@ Do these **in order**:
 
 ## Docker Desktop won't start?
 
-Try these in order. Give it **3 minutes**, then switch to **Plan B** (CloudShell) or **Plan C** (GitHub Actions) below. You can still do the whole workshop.
+Try these in order. Give it **3 minutes**, then switch to **Path B** (CloudShell). You can still do the whole workshop.
 
 **Any laptop**
 1. Quit Docker Desktop and open it again. The first start can take **2 minutes**: wait for **Engine running**.
@@ -435,7 +506,7 @@ Try these in order. Give it **3 minutes**, then switch to **Plan B** (CloudShell
 |---|---|
 | `docker: command not found` | Docker was opened from the installer disk. Quit it, drag **Docker.app** into **Applications**, eject the Docker disk, open Docker from Applications, restart VS Code |
 | Stuck on **Docker Desktop is starting…** | Quit it → open again → **Troubleshoot** → **Clean / Purge data** |
-| "This version of macOS is not supported" | Docker Desktop needs a recent macOS. Use Plan B or C |
+| "This version of macOS is not supported" | Docker Desktop needs a recent macOS. Use Path B (CloudShell) |
 
 **Windows**
 | You see | Do this |
@@ -443,28 +514,15 @@ Try these in order. Give it **3 minutes**, then switch to **Plan B** (CloudShell
 | **WSL 2 installation is incomplete** / WSL needs updating | PowerShell **as administrator**: `wsl --install`, then `wsl --update`. Restart |
 | **Virtualization support not detected** | Turn on virtualization in the BIOS (*Intel VT-x* or *AMD-V/SVM*). In **Turn Windows features on or off**, tick **Virtual Machine Platform** and **Windows Subsystem for Linux**. Restart |
 | **Unexpected WSL error** | PowerShell: `wsl --shutdown`, then open Docker Desktop again |
-| No admin rights (college or office laptop) | You can't install Docker. Use Plan B or C |
+| No admin rights (college or office laptop) | You can't install Docker. Use Path B (CloudShell) |
 
 ---
 
-## Plan B: Docker won't work on your laptop? Use CloudShell
+## Path C: Build, push and deploy with GitHub Actions
 
-**CloudShell** is a terminal in the AWS Console with Docker and the AWS CLI already installed. You don't need `aws login` there.
+A pipeline: GitHub builds the image and pushes it to **your** ECR repository, and (with C.5) deploys it to your ECS service. You need a free **GitHub account**. It takes about 10 minutes to set up once. No access keys: GitHub signs in to AWS with a short-lived token (OIDC) and an IAM role you create.
 
-1. Console (region **ap-south-1**) → click the **CloudShell icon `>_`** in the top bar.
-2. Get the code (Git is already installed in CloudShell):
-```bash
-git clone https://github.com/cloudadhar/from-code-to-cloud.git
-cd from-code-to-cloud
-```
-3. Run the same `docker` and `aws ecr` commands from Parts 2–3 there. You can't open `localhost` from CloudShell, so test with `curl http://localhost:8080/health` instead.
-4. For Part 8, edit the file right in CloudShell: `nano index.html` → change the line under `<!-- Part 8 ... -->` → save with `Ctrl+O`, `Enter` → exit with `Ctrl+X`. Then build and push v2 with the Part 8.2 commands.
-
-## Plan C: Docker won't work? Build on GitHub Actions
-
-GitHub builds the image for you and pushes it to **your** ECR repository. You need a free **GitHub account**. It takes about 10 minutes to set up once. No access keys: GitHub signs in to AWS with a short-lived token (OIDC) and an IAM role you create.
-
-The workflow is [.github/workflows/build-and-push.yml](.github/workflows/build-and-push.yml). It runs only when you click **Run workflow**.
+The workflow is [.github/workflows/build-and-push.yml](.github/workflows/build-and-push.yml). It runs when you click **Run workflow**, and (once C.5 is set up) on every commit to `main` that changes `app.py`, `index.html` or the `Dockerfile`.
 
 ### C.1 Fork the repo (GitHub)
 1. Open **https://github.com/cloudadhar/from-code-to-cloud** → **Fork** → **Create fork**.
@@ -480,9 +538,44 @@ The workflow is [.github/workflows/build-and-push.yml](.github/workflows/build-a
    - **Trusted entity type:** Web identity
    - **Identity provider:** `token.actions.githubusercontent.com` · **Audience:** `sts.amazonaws.com`
    - **GitHub organization:** your GitHub username · **GitHub repository:** `from-code-to-cloud` · **GitHub branch:** `main` → **Next**
-   - **Permissions:** tick `AmazonEC2ContainerRegistryPowerUser` → **Next**
+   - **Permissions:** tick `AmazonEC2ContainerRegistryPowerUser` (build and push to ECR) → **Next**
    - **Role name:** `github-ecr-push` → **Create role**
-3. Open the role and **copy its ARN** (`arn:aws:iam::123456789012:role/github-ecr-push`).
+3. Open the role → **Permissions** → **Add permissions** → **Create inline policy** → **JSON**, paste this (replace `123456789012` with your account ID) → name it `ecr-public-and-ecs-deploy` → **Create policy**:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EcrPublicSignInForTheBaseImage",
+      "Effect": "Allow",
+      "Action": ["ecr-public:GetAuthorizationToken", "sts:GetServiceBearerToken"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcsDeployForCD",
+      "Effect": "Allow",
+      "Action": ["ecs:DescribeTaskDefinition", "ecs:RegisterTaskDefinition", "ecs:DescribeServices", "ecs:UpdateService"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LetEcsUseTheTaskExecutionRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::123456789012:role/*",
+      "Condition": {"StringEquals": {"iam:PassedToService": "ecs-tasks.amazonaws.com"}}
+    }
+  ]
+}
+```
+4. Check the **Trust relationships** tab. The wizard writes a trust policy like this (your username and repo instead of `YOUR-GITHUB-USERNAME`):
+```json
+"Condition": {
+  "StringEquals": {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"},
+  "StringLike": {"token.actions.githubusercontent.com:sub": "repo:YOUR-GITHUB-USERNAME/from-code-to-cloud:ref:refs/heads/main"}
+}
+```
+   Some GitHub accounts send an ID-based value instead, like `repo:YOUR-GITHUB-USERNAME@12345678/from-code-to-cloud@987654321:ref:refs/heads/main`. If the run fails with `Not authorized to perform sts:AssumeRoleWithWebIdentity`, add that form to the `sub` list too. Your IDs: `https://api.github.com/repos/YOUR-GITHUB-USERNAME/from-code-to-cloud` → `id` (repo) and `owner.id`.
+5. Copy the role's **ARN** (`arn:aws:iam::123456789012:role/github-ecr-push`).
 
 ### C.3 Add the ECR details as variables (GitHub)
 Your fork → **Settings** → **Secrets and variables** → **Actions** → **Variables** tab → **New repository variable**, three times:
@@ -495,16 +588,19 @@ Your fork → **Settings** → **Secrets and variables** → **Actions** → **V
 
 ### C.4 Build and push
 1. Create the ECR repository first (Part 3.1).
-2. Your fork → **Actions** → **Build, push and deploy** → **Run workflow** → **tag:** `v1` → **Run workflow**.
+2. Your fork → **Actions** → **Build, push and deploy** → **Run workflow** → **tag:** `v1`, untick **deploy** for now → **Run workflow**.
 3. Wait about 2 minutes for the green ✅. Open the run: the summary shows your **Image URI**.
-4. Continue at **Part 3.4** (check ECR) and Part 4.
+4. Continue at **Part 3.4** (check ECR) and Part 4. Create the cluster, task definition and service in the Console; then turn on CD (C.5).
 
-**Part 8 with Plan C:** in your fork, open `index.html` → pencil icon ✏️ → change your message → **Commit changes**. Then run the workflow again with **tag:** `v2`. (With the CD variables below, the commit itself builds and deploys v2.)
+**Part 8 with Path C:** in your fork, open `index.html` → pencil icon ✏️ → change your message → **Commit changes**. Then run the workflow again with **tag:** `v2`. (With the CD variables below, the commit itself builds and deploys v2.)
 
 | Problem | Fix |
 |---|---|
 | `Add these in Settings → … Variables` | A variable is missing or misspelled (C.3) |
-| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The role's GitHub username, repo name or branch doesn't match your fork. IAM → the role → **Trust relationships** → check them |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The trust policy's `sub` doesn't match. Check the username, repo and branch, and add the ID-based form (C.2 step 4) |
+| `Secrets` instead of `Variables` | The workflow reads **Variables**. Add them on the **Variables** tab, not **Secrets** |
+| `429 Too Many Requests` on the base image | The role is missing the ECR Public permissions (C.2 step 3) |
+| `AccessDenied` on `ecs:...` or `iam:PassRole` in the deploy job | The role is missing the inline policy (C.2 step 3) |
 | `repository ... does not exist` | Create the ECR repo (Part 3.1) in the same region as `AWS_REGION` |
 | No **Run workflow** button | Actions aren't enabled in your fork (C.1 step 2) |
 
@@ -518,7 +614,7 @@ Add four more **variables** (C.3):
 | `ECS_CLUSTER` | `cloudadhar-cluster` |
 | `ECS_SERVICE` | `cloudadhar-web` |
 | `ECS_TASK_DEFINITION` | `from-code-to-cloud` (the task definition family) |
-| `ECS_CONTAINER_NAME` | `web` (the container name in the task definition) |
+| `ECS_CONTAINER_NAME` | `web`: the container name in your task definition (check it: if the Console named it `Main`, use `Main`) |
 
 Now:
 - **Run workflow** with **deploy** ticked → build, push and deploy in one go.
@@ -529,7 +625,7 @@ The run waits until the new task is running and healthy, then shows ✅ **Deploy
 | Problem | Fix |
 |---|---|
 | `Unable to describe task definition` | `ECS_TASK_DEFINITION` must be the family name, in the same region as `AWS_REGION` |
-| `Invalid container name` / image not changed | `ECS_CONTAINER_NAME` must match the container name in the task definition (`web`) |
+| `Invalid container name` / image not changed | `ECS_CONTAINER_NAME` must match the container name in the task definition exactly |
 | `ServiceNotFoundException` | Check `ECS_CLUSTER` and `ECS_SERVICE`, and that the service exists (Part 5.3) |
 | Deploy step runs for 10+ minutes | The new task keeps stopping. ECS → the service → **Tasks** → stopped task → **Stopped reason** |
 
@@ -540,7 +636,7 @@ Clean up afterwards: delete the role `github-ecr-push` (and the identity provide
 ## Security notes
 - The container runs as a **non-root user** (`USER appuser` in the Dockerfile).
 - The image comes from **Amazon ECR Public** (`public.ecr.aws`), which avoids Docker Hub rate limits.
-- **No access keys** anywhere: `aws login` uses your Console sign-in for short-term credentials, and ECS uses the task execution role.
+- **No access keys** anywhere: `aws login` and CloudShell use your Console sign-in, the pipeline uses short-lived OIDC tokens, and ECS uses the task execution role.
 - Port 8080 is open to the internet only for this workshop. In production, put an ALB in front and keep tasks in private subnets.
 
 ---

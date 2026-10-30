@@ -1,6 +1,6 @@
-# Plan C + CD: build the image on GitHub, push it to your Amazon ECR repository,
+# Path C (pipeline): build the image on GitHub, push it to your Amazon ECR repository,
 # then (optionally) deploy it to your ECS service.
-# Setup steps: README → "Plan C: GitHub Actions" and "CD: deploy to ECS automatically".
+# Setup steps: README → "Path C: Build, push and deploy with GitHub Actions" (C.1–C.5).
 #
 # Runs when you click "Run workflow" (Actions tab), and on every push to main that
 # changes app.py, index.html or the Dockerfile. Without the repository variables it skips.
