@@ -188,7 +188,7 @@ http://<public-ip>:8080
 
 ## Step 8: Ship version 2
 
-1. Edit `index.html`: change the line under `<!-- Part 8 ... -->` to your own message, e.g. `Deployed by Priya 🚀`.
+1. Edit `index.html`: change the line under `<!-- Part 8 ... -->` to your own message, e.g. `Deployed by Cloudadhar 🚀`.
    - **💻 Laptop:** in VS Code, save.
    - **☁️ CloudShell:** `nano index.html` → edit → `Ctrl+O`, `Enter`, `Ctrl+X`.
 2. Build and push **v2** (replace `123456789012` again):
