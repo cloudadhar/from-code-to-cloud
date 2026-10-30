@@ -81,6 +81,7 @@ from-code-to-cloud/
 ├── index.html        <- the page you'll see (you'll edit it in Part 8)
 ├── Dockerfile        <- the recipe to build the image
 ├── .dockerignore     <- files kept out of the image
+├── .github/workflows/build-and-push.yml  <- Plan C: build on GitHub
 └── docs/
     └── PREREQUISITES.md
 ```
@@ -383,7 +384,7 @@ Do these **in order**:
 1. **Application Load Balancer:** create the service with **Load balancing** → **Application Load Balancer**, so the app has one fixed URL. *(An ALB costs about US$0.02/hour, so delete it afterwards.)*
 2. **Auto scaling:** in the service, add **Service auto scaling** with a target of 50% CPU, min 1, max 3 tasks.
 3. **Health check:** in the task definition, add a container health check: `CMD-SHELL, python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')" || exit 1`.
-4. **CI/CD:** automatically build, push and deploy on every `git push` with GitHub Actions and OIDC (no access keys).
+4. **CI/CD:** extend [the Plan C workflow](.github/workflows/build-and-push.yml) so every `git push` also registers a new task definition revision and updates the ECS service.
 5. **Try a different image:** create a new task definition with the public image `public.ecr.aws/nginx/nginx:latest` on port 80.
 
 ---
@@ -394,7 +395,7 @@ Do these **in order**:
 |---|---|
 | `docker: command not found` | **Mac:** Docker was opened from the installer disk. Quit it, drag **Docker.app** into **Applications**, eject the Docker disk, open Docker from Applications. **Windows:** restart VS Code (or the laptop) after installing |
 | `Cannot connect to the Docker daemon` / `error during connect` | Docker Desktop isn't running. Open it and wait for **Engine running** |
-| Docker Desktop won't start on Windows | Turn on virtualization in the BIOS and run `wsl --update` in PowerShell (as administrator), then restart. Still stuck? Use **Plan B** below |
+| Docker Desktop won't start | See **Docker Desktop won't start?** below. Still stuck after 3 minutes? Use **Plan B** or **Plan C** |
 | `aws: command not found` or `Invalid choice: 'login'` | Install or update the AWS CLI to **2.32 or newer**, then restart VS Code |
 | `Unable to locate credentials` | Run `aws login` again (it lasts up to 12 hours) |
 | `no basic auth credentials` on `docker push` | Run the `aws ecr get-login-password ... docker login` line again |
@@ -411,6 +412,33 @@ Do these **in order**:
 
 ---
 
+## Docker Desktop won't start?
+
+Try these in order. Give it **3 minutes**, then switch to **Plan B** (CloudShell) or **Plan C** (GitHub Actions) below. You can still do the whole workshop.
+
+**Any laptop**
+1. Quit Docker Desktop and open it again. The first start can take **2 minutes**: wait for **Engine running**.
+2. Restart the laptop.
+3. Check free disk space: Docker needs about **10 GB** free.
+4. Docker Desktop → **Troubleshoot** (bug icon, top right) → **Restart Docker Desktop**. Still stuck? **Reset to factory defaults** in the same menu.
+
+**Mac**
+| You see | Do this |
+|---|---|
+| `docker: command not found` | Docker was opened from the installer disk. Quit it, drag **Docker.app** into **Applications**, eject the Docker disk, open Docker from Applications, restart VS Code |
+| Stuck on **Docker Desktop is starting…** | Quit it → open again → **Troubleshoot** → **Clean / Purge data** |
+| "This version of macOS is not supported" | Docker Desktop needs a recent macOS. Use Plan B or C |
+
+**Windows**
+| You see | Do this |
+|---|---|
+| **WSL 2 installation is incomplete** / WSL needs updating | PowerShell **as administrator**: `wsl --install`, then `wsl --update`. Restart |
+| **Virtualization support not detected** | Turn on virtualization in the BIOS (*Intel VT-x* or *AMD-V/SVM*). In **Turn Windows features on or off**, tick **Virtual Machine Platform** and **Windows Subsystem for Linux**. Restart |
+| **Unexpected WSL error** | PowerShell: `wsl --shutdown`, then open Docker Desktop again |
+| No admin rights (college or office laptop) | You can't install Docker. Use Plan B or C |
+
+---
+
 ## Plan B: Docker won't work on your laptop? Use CloudShell
 
 **CloudShell** is a terminal in the AWS Console with Docker and the AWS CLI already installed. You don't need `aws login` there.
@@ -423,6 +451,56 @@ cd from-code-to-cloud
 ```
 3. Run the same `docker` and `aws ecr` commands from Parts 2–3 there. You can't open `localhost` from CloudShell, so test with `curl http://localhost:8080/health` instead.
 4. For Part 8, edit `index.html` in VS Code, upload it with **Actions → Upload file**, then run `mv ~/index.html ~/from-code-to-cloud/index.html`.
+
+## Plan C: Docker won't work? Build on GitHub Actions
+
+GitHub builds the image for you and pushes it to **your** ECR repository. You need a free **GitHub account**. It takes about 10 minutes to set up once. No access keys: GitHub signs in to AWS with a short-lived token (OIDC) and an IAM role you create.
+
+The workflow is [.github/workflows/build-and-push.yml](.github/workflows/build-and-push.yml). It runs only when you click **Run workflow**.
+
+### C.1 Fork the repo (GitHub)
+1. Open **https://github.com/cloudadhar/from-code-to-cloud** → **Fork** → **Create fork**.
+2. In **your** fork → **Actions** tab → **I understand my workflows, go ahead and enable them**.
+
+### C.2 Let GitHub sign in to AWS (Console, one time)
+1. **IAM** → **Identity providers** → **Add provider**
+   - **Provider type:** OpenID Connect
+   - **Provider URL:** `https://token.actions.githubusercontent.com`
+   - **Audience:** `sts.amazonaws.com` → **Add provider**
+   - Already in the list? Skip this step.
+2. **IAM** → **Roles** → **Create role**
+   - **Trusted entity type:** Web identity
+   - **Identity provider:** `token.actions.githubusercontent.com` · **Audience:** `sts.amazonaws.com`
+   - **GitHub organization:** your GitHub username · **GitHub repository:** `from-code-to-cloud` · **GitHub branch:** `main` → **Next**
+   - **Permissions:** tick `AmazonEC2ContainerRegistryPowerUser` → **Next**
+   - **Role name:** `github-ecr-push` → **Create role**
+3. Open the role and **copy its ARN** (`arn:aws:iam::123456789012:role/github-ecr-push`).
+
+### C.3 Add the ECR details as variables (GitHub)
+Your fork → **Settings** → **Secrets and variables** → **Actions** → **Variables** tab → **New repository variable**, three times:
+
+| Name | Value |
+|---|---|
+| `AWS_ROLE_ARN` | the role ARN from C.2 |
+| `AWS_REGION` | `ap-south-1` |
+| `ECR_REPOSITORY` | `from-code-to-cloud` |
+
+### C.4 Build and push
+1. Create the ECR repository first (Part 3.1).
+2. Your fork → **Actions** → **Build and push to ECR** → **Run workflow** → **tag:** `v1` → **Run workflow**.
+3. Wait about 2 minutes for the green ✅. Open the run: the summary shows your **Image URI**.
+4. Continue at **Part 3.4** (check ECR) and Part 4.
+
+**Part 8 with Plan C:** in your fork, open `index.html` → pencil icon ✏️ → change your message → **Commit changes**. Then run the workflow again with **tag:** `v2`.
+
+| Problem | Fix |
+|---|---|
+| `Add these in Settings → … Variables` | A variable is missing or misspelled (C.3) |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The role's GitHub username, repo name or branch doesn't match your fork. IAM → the role → **Trust relationships** → check them |
+| `repository ... does not exist` | Create the ECR repo (Part 3.1) in the same region as `AWS_REGION` |
+| No **Run workflow** button | Actions aren't enabled in your fork (C.1 step 2) |
+
+Clean up afterwards: delete the role `github-ecr-push` (and the identity provider if you added it) in IAM.
 
 ---
 

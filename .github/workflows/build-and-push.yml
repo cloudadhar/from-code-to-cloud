@@ -1,0 +1,72 @@
+# Plan C: build the image on GitHub and push it to your Amazon ECR repository.
+# Use this when Docker won't work on your laptop. Setup steps: README → "Plan C: GitHub Actions".
+#
+# It runs only when you click "Run workflow" (Actions tab), never on a push.
+# No access keys: GitHub signs in to AWS with a short-lived token (OIDC) and the IAM role you created.
+
+name: Build and push to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (v1 first, v2 in Part 8)"
+        required: true
+        default: v1
+
+permissions:
+  id-token: write   # lets GitHub request the OIDC token AWS trusts
+  contents: read    # lets the job read the code
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+
+    steps:
+      - name: Check the repository variables and the tag
+        run: |
+          missing=""
+          [ -n "$AWS_ROLE_ARN" ] || missing="$missing AWS_ROLE_ARN"
+          [ -n "$AWS_REGION" ] || missing="$missing AWS_REGION"
+          [ -n "$ECR_REPOSITORY" ] || missing="$missing ECR_REPOSITORY"
+          if [ -n "$missing" ]; then
+            echo "::error::Add these in Settings → Secrets and variables → Actions → Variables:$missing"
+            exit 1
+          fi
+          if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9._-]{1,128}$'; then
+            echo "::error::The tag may only use letters, digits, '.', '_' and '-' (for example v1)."
+            exit 1
+          fi
+
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Sign in to AWS (no access keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log Docker in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build the image (same as Part 2.4)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build --platform linux/amd64 --build-arg APP_VERSION="$TAG" \
+            -t "$REGISTRY/$ECR_REPOSITORY:$TAG" .
+
+      - name: Push the image to ECR (same as Part 3.3)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker push "$REGISTRY/$ECR_REPOSITORY:$TAG"
+          echo "### ✅ Pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Image URI for your task definition: \`$REGISTRY/$ECR_REPOSITORY:$TAG\`" >> "$GITHUB_STEP_SUMMARY"
