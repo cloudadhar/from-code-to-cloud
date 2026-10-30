@@ -1,10 +1,12 @@
-# Plan C: build the image on GitHub and push it to your Amazon ECR repository.
-# Use this when Docker won't work on your laptop. Setup steps: README → "Plan C: GitHub Actions".
+# Plan C + CD: build the image on GitHub, push it to your Amazon ECR repository,
+# then (optionally) deploy it to your ECS service.
+# Setup steps: README → "Plan C: GitHub Actions" and "CD: deploy to ECS automatically".
 #
-# It runs only when you click "Run workflow" (Actions tab), never on a push.
+# Runs when you click "Run workflow" (Actions tab), and on every push to main that
+# changes app.py, index.html or the Dockerfile. Without the repository variables it skips.
 # No access keys: GitHub signs in to AWS with a short-lived token (OIDC) and the IAM role you created.
 
-name: Build and push to ECR
+name: Build, push and deploy
 
 on:
   workflow_dispatch:
@@ -13,14 +15,30 @@ on:
         description: "Image tag (v1 first, v2 in Part 8)"
         required: true
         default: v1
+      deploy:
+        description: "Also deploy to ECS (needs the ECS_* variables)"
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths: [app.py, index.html, Dockerfile]
 
 permissions:
   id-token: write   # lets GitHub request the OIDC token AWS trusts
   contents: read    # lets the job read the code
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
+    # On a push, run only once the variables are set (forks skip quietly).
+    # A manual run always starts, so it can tell you what's missing.
+    if: github.event_name == 'workflow_dispatch' || vars.AWS_ROLE_ARN != ''
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.push.outputs.image }}
     env:
       TAG: ${{ inputs.tag }}
       AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
@@ -37,6 +55,11 @@ jobs:
           if [ -n "$missing" ]; then
             echo "::error::Add these in Settings → Secrets and variables → Actions → Variables:$missing"
             exit 1
+          fi
+          # A push has no tag input: tag the image with the commit, e.g. git-1a2b3c4
+          if [ -z "$TAG" ]; then
+            TAG="git-${GITHUB_SHA::7}"
+            echo "TAG=$TAG" >> "$GITHUB_ENV"
           fi
           if ! printf '%s' "$TAG" | grep -Eq '^[A-Za-z0-9._-]{1,128}$'; then
             echo "::error::The tag may only use letters, digits, '.', '_' and '-' (for example v1)."
@@ -75,9 +98,73 @@ jobs:
             -t "$REGISTRY/$ECR_REPOSITORY:$TAG" .
 
       - name: Push the image to ECR (same as Part 3.3)
+        id: push
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           docker push "$REGISTRY/$ECR_REPOSITORY:$TAG"
+          echo "image=$REGISTRY/$ECR_REPOSITORY:$TAG" >> "$GITHUB_OUTPUT"
           echo "### ✅ Pushed" >> "$GITHUB_STEP_SUMMARY"
           echo "Image URI for your task definition: \`$REGISTRY/$ECR_REPOSITORY:$TAG\`" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: build-and-push
+    # Deploy only when the ECS variables are set, and (for a manual run) "deploy" is ticked.
+    if: vars.ECS_SERVICE != '' && (github.event_name == 'push' || inputs.deploy)
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+      ECS_TASK_DEFINITION: ${{ vars.ECS_TASK_DEFINITION }}
+      ECS_CONTAINER_NAME: ${{ vars.ECS_CONTAINER_NAME }}
+
+    steps:
+      - name: Check the ECS variables
+        run: |
+          missing=""
+          [ -n "$ECS_CLUSTER" ] || missing="$missing ECS_CLUSTER"
+          [ -n "$ECS_TASK_DEFINITION" ] || missing="$missing ECS_TASK_DEFINITION"
+          [ -n "$ECS_CONTAINER_NAME" ] || missing="$missing ECS_CONTAINER_NAME"
+          if [ -n "$missing" ]; then
+            echo "::error::Add these in Settings → Secrets and variables → Actions → Variables:$missing"
+            exit 1
+          fi
+
+      - name: Sign in to AWS (no access keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Start from the latest revision you made in the Console (Part 4.2), so CPU, memory,
+      # port, logs and roles stay exactly as you set them. Only the image changes.
+      - name: Download the current task definition
+        run: |
+          aws ecs describe-task-definition --task-definition "$ECS_TASK_DEFINITION" \
+            --query taskDefinition > task-definition.json
+
+      - name: Put the new image in the task definition
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ vars.ECS_CONTAINER_NAME }}
+          image: ${{ needs.build-and-push.outputs.image }}
+
+      # Same as Part 8.3: new revision → update service → rolling deployment.
+      - name: Deploy to ECS (rolling deployment)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          service: ${{ vars.ECS_SERVICE }}
+          wait-for-service-stability: true
+
+      - name: Summary
+        env:
+          IMAGE: ${{ needs.build-and-push.outputs.image }}
+        run: |
+          echo "### 🚀 Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Service \`$ECS_SERVICE\` in cluster \`$ECS_CLUSTER\` now runs \`$IMAGE\`." >> "$GITHUB_STEP_SUMMARY"
+          echo "Open: ECS → Clusters → $ECS_CLUSTER → Services → $ECS_SERVICE → Tasks → task → Public IP, then http://<public-ip>:8080" >> "$GITHUB_STEP_SUMMARY"

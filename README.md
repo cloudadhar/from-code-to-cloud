@@ -81,7 +81,7 @@ from-code-to-cloud/
 ├── index.html        <- the page you'll see (you'll edit it in Part 8)
 ├── Dockerfile        <- the recipe to build the image
 ├── .dockerignore     <- files kept out of the image
-├── .github/workflows/build-and-push.yml  <- Plan C: build on GitHub
+├── .github/workflows/build-and-push.yml  <- Plan C: build, push and deploy on GitHub
 └── docs/
     └── PREREQUISITES.md
 ```
@@ -384,7 +384,7 @@ Do these **in order**:
 1. **Application Load Balancer:** create the service with **Load balancing** → **Application Load Balancer**, so the app has one fixed URL. *(An ALB costs about US$0.02/hour, so delete it afterwards.)*
 2. **Auto scaling:** in the service, add **Service auto scaling** with a target of 50% CPU, min 1, max 3 tasks.
 3. **Health check:** in the task definition, add a container health check: `CMD-SHELL, python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')" || exit 1`.
-4. **CI/CD:** extend [the Plan C workflow](.github/workflows/build-and-push.yml) so every `git push` also registers a new task definition revision and updates the ECS service.
+4. **CI/CD:** turn on automatic deploys with the workflow in **Plan C** (C.5): every commit to `main` builds, pushes and deploys.
 5. **Try a different image:** create a new task definition with the public image `public.ecr.aws/nginx/nginx:latest` on port 80.
 
 ---
@@ -488,11 +488,11 @@ Your fork → **Settings** → **Secrets and variables** → **Actions** → **V
 
 ### C.4 Build and push
 1. Create the ECR repository first (Part 3.1).
-2. Your fork → **Actions** → **Build and push to ECR** → **Run workflow** → **tag:** `v1` → **Run workflow**.
+2. Your fork → **Actions** → **Build, push and deploy** → **Run workflow** → **tag:** `v1` → **Run workflow**.
 3. Wait about 2 minutes for the green ✅. Open the run: the summary shows your **Image URI**.
 4. Continue at **Part 3.4** (check ECR) and Part 4.
 
-**Part 8 with Plan C:** in your fork, open `index.html` → pencil icon ✏️ → change your message → **Commit changes**. Then run the workflow again with **tag:** `v2`.
+**Part 8 with Plan C:** in your fork, open `index.html` → pencil icon ✏️ → change your message → **Commit changes**. Then run the workflow again with **tag:** `v2`. (With the CD variables below, the commit itself builds and deploys v2.)
 
 | Problem | Fix |
 |---|---|
@@ -500,6 +500,31 @@ Your fork → **Settings** → **Secrets and variables** → **Actions** → **V
 | `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The role's GitHub username, repo name or branch doesn't match your fork. IAM → the role → **Trust relationships** → check them |
 | `repository ... does not exist` | Create the ECR repo (Part 3.1) in the same region as `AWS_REGION` |
 | No **Run workflow** button | Actions aren't enabled in your fork (C.1 step 2) |
+
+### C.5 CD: deploy to ECS automatically (optional)
+Once your ECS **service** exists (Part 5.3), the same workflow can deploy every new image for you: it takes your latest task definition, swaps in the new image, registers a new revision and updates the service (a rolling deployment, like Part 8.3).
+
+Add four more **variables** (C.3):
+
+| Name | Value |
+|---|---|
+| `ECS_CLUSTER` | `cloudadhar-cluster` |
+| `ECS_SERVICE` | `cloudadhar-web` |
+| `ECS_TASK_DEFINITION` | `from-code-to-cloud` (the task definition family) |
+| `ECS_CONTAINER_NAME` | `web` (the container name in the task definition) |
+
+Now:
+- **Run workflow** with **deploy** ticked → build, push and deploy in one go.
+- Or just **edit `index.html` on GitHub and commit to `main`**: the workflow starts by itself, tags the image `git-<commit>`, and deploys it. Watch the **Deployments** tab in ECS, then refresh the new task's Public IP.
+
+The run waits until the new task is running and healthy, then shows ✅ **Deployed**.
+
+| Problem | Fix |
+|---|---|
+| `Unable to describe task definition` | `ECS_TASK_DEFINITION` must be the family name, in the same region as `AWS_REGION` |
+| `Invalid container name` / image not changed | `ECS_CONTAINER_NAME` must match the container name in the task definition (`web`) |
+| `ServiceNotFoundException` | Check `ECS_CLUSTER` and `ECS_SERVICE`, and that the service exists (Part 5.3) |
+| Deploy step runs for 10+ minutes | The new task keeps stopping. ECS → the service → **Tasks** → stopped task → **Stopped reason** |
 
 Clean up afterwards: delete the role `github-ecr-push` (and the identity provider if you added it) in IAM.
 
