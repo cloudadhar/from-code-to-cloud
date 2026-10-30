@@ -223,7 +223,9 @@ Refresh the repository page. ✅ You see an image with tag **v1**. Click it and 
 ## Part 4: Create the cluster and task definition (15 min)
 
 ### 4.1 Create an ECS cluster
-1. **Elastic Container Service (ECS)** → **Clusters** → **Create cluster**
+> ⚠️ If ECS opens a page called **Let's set up your app** (Express mode, with an *Infrastructure role*), click **Cancel**. We build each piece ourselves so you learn what it is. Use **Clusters** in the left menu.
+
+1. **Elastic Container Service (ECS)** → **Clusters** (left menu) → **Create cluster**
 2. **Cluster name:** `cloudadhar-cluster`
 3. **Infrastructure:** keep **AWS Fargate (serverless)** only
 4. **Create** (takes about 1 minute)
